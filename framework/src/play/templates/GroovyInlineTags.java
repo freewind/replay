@@ -71,6 +71,7 @@ public class GroovyInlineTags {
         switch (f) {
             case START:
                 s.append("if(!attrs").append(index).append("['as']) {attrs").append(index).append("['as'] = '';};");
+                s.append("if(!attrs").append(index).append("['separator']) {attrs").append(index).append("['separator'] = '';};");
                 s.append("if(!attrs").append(index).append("['items']) {attrs").append(index).append("['items'] = attrs").append(index).append("['arg'];};");
                 s.append("if(attrs").append(index).append("['items']) { play.templates.TagContext.parent().data.put('_executeNextElse', false);");
                 s.append("_iter").append(index).append(" = attrs").append(index).append("['items'].iterator();");
@@ -83,6 +84,7 @@ public class GroovyInlineTags {
                 s.append("setProperty(attrs").append(index).append("['as']+'_parity', _").append(index).append("_i%2==0?'even':'odd');");
                 break;
             case END:
+                s.append("if(_iter").append(index).append(".hasNext()) out.print(attrs").append(index).append("['separator']);");
                 s.append("};");
                 s.append("} else { play.templates.TagContext.parent().data.put('_executeNextElse', true); }");
                 break;
