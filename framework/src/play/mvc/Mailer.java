@@ -1,15 +1,12 @@
 package play.mvc;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.mail.*;
+import org.apache.commons.mail.Email;
+import org.apache.commons.mail.EmailAttachment;
+import org.apache.commons.mail.EmailException;
+import org.apache.commons.mail.HtmlEmail;
+import org.apache.commons.mail.MultiPartEmail;
+import org.apache.commons.mail.SimpleEmail;
 import play.Logger;
 import play.classloading.enhancers.LVEnhancer.LVEnhancerRuntime;
 import play.exceptions.MailException;
@@ -20,6 +17,13 @@ import play.templates.Template;
 import play.templates.TemplateLoader;
 
 import javax.mail.internet.InternetAddress;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /**
  * Application mailer support
@@ -186,7 +190,7 @@ public class Mailer {
             templateName = templateName.replace(".", "/");
 
             String[] names = LVEnhancerRuntime.getParamNames().mergeParamsAndVarargs();
-            
+
             // overrides Template name
             if (args.length > 0 && args[0] instanceof String && names[0] == null) {
                 templateName = args[0].toString();

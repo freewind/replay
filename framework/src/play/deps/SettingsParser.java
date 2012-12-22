@@ -1,14 +1,5 @@
 package play.deps;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import org.apache.ivy.core.settings.IvySettings;
 import org.apache.ivy.plugins.matcher.PatternMatcher;
 import org.apache.ivy.plugins.resolver.ChainResolver;
@@ -18,6 +9,15 @@ import org.apache.ivy.plugins.resolver.IBiblioResolver;
 import org.apache.ivy.plugins.resolver.URLResolver;
 import org.yaml.snakeyaml.Yaml;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class SettingsParser {
 
     static class Oops extends Exception {
@@ -26,7 +26,7 @@ public class SettingsParser {
             super(message);
         }
     }
-    
+
     HumanReadyLogger logger;
 
     public SettingsParser(HumanReadyLogger logger) {
@@ -34,7 +34,7 @@ public class SettingsParser {
     }
 
     public void parse(IvySettings settings, File desc) {
-        if(!desc.exists()) {
+        if (!desc.exists()) {
             System.out.println("~ !! " + desc.getAbsolutePath() + " does not exist");
             return;
         }
@@ -64,7 +64,7 @@ public class SettingsParser {
 
                     List repositories = (List) data.get("repositories");
                     List<Map<String, String>> modules = new ArrayList<Map<String, String>>();
-                    for (Object dep: repositories) {
+                    for (Object dep : repositories) {
                         if (dep instanceof Map) {
                             settings.addResolver(parseRepository((Map) dep, modules));
                         } else {
@@ -72,7 +72,7 @@ public class SettingsParser {
                         }
                     }
 
-                    for (Map attributes: modules) {
+                    for (Map attributes : modules) {
                         settings.addModuleConfiguration(attributes, settings.getMatcher(PatternMatcher.EXACT_OR_REGEXP), (String) attributes.remove("resolver"), null, null, null);
                     }
 
@@ -97,7 +97,7 @@ public class SettingsParser {
     private void parseIncludes(IvySettings settings, Map data) throws Oops {
         if (data.containsKey("include") && data.get("include") != null) {
             if (data.get("include") instanceof List) {
-                List<?> includes = (List)data.get("include");
+                List<?> includes = (List) data.get("include");
                 if (includes != null) {
                     for (Object inc : includes) {
                         File include = new File(substitute(inc.toString()));
@@ -129,7 +129,7 @@ public class SettingsParser {
         if (type.equalsIgnoreCase("iBiblio")) {
             IBiblioResolver iBiblioResolver = new IBiblioResolver();
             iBiblioResolver.setName(repName);
-            if(options.containsKey("root")) {
+            if (options.containsKey("root")) {
                 iBiblioResolver.setRoot(get(options, "root", String.class));
             }
             iBiblioResolver.setM2compatible(get(options, "m2compatible", boolean.class, true));
@@ -170,7 +170,7 @@ public class SettingsParser {
             chainResolver.setReturnFirst(true);
             for (Object o : get(options, "using", List.class, new ArrayList())) {
                 DependencyResolver res = parseRepository((Map) o, modules);
-                if(res instanceof FileSystemResolver) {
+                if (res instanceof FileSystemResolver) {
                     chainResolver.setCheckmodified(true);
                 }
                 chainResolver.add(res);
@@ -255,11 +255,11 @@ public class SettingsParser {
      * @throws Oops If an environment variable is not found
      */
     private String substitute(String s) throws Oops {
-        Matcher m = Pattern.compile("\\$\\{([^\\}]*)\\}").matcher((String)s); //search of ${something} group(1) => something
+        Matcher m = Pattern.compile("\\$\\{([^\\}]*)\\}").matcher((String) s); //search of ${something} group(1) => something
         while (m.find()) {
             String propertyValue = System.getProperty(m.group(1));
-            if(propertyValue != null){
-                s = s.replace("${" + m.group(1) + "}",propertyValue);
+            if (propertyValue != null) {
+                s = s.replace("${" + m.group(1) + "}", propertyValue);
             } else {
                 throw new Oops("Unknown property " + m.group(1) + " in " + s);
             }

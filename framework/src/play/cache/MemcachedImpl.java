@@ -1,5 +1,16 @@
 package play.cache;
 
+import net.spy.memcached.AddrUtil;
+import net.spy.memcached.ConnectionFactory;
+import net.spy.memcached.ConnectionFactoryBuilder;
+import net.spy.memcached.MemcachedClient;
+import net.spy.memcached.auth.AuthDescriptor;
+import net.spy.memcached.auth.PlainCallbackHandler;
+import net.spy.memcached.transcoders.SerializingTranscoder;
+import play.Logger;
+import play.Play;
+import play.exceptions.ConfigurationException;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -13,20 +24,9 @@ import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import net.spy.memcached.AddrUtil;
-import net.spy.memcached.ConnectionFactory;
-import net.spy.memcached.ConnectionFactoryBuilder;
-import net.spy.memcached.MemcachedClient;
-import net.spy.memcached.auth.AuthDescriptor;
-import net.spy.memcached.auth.PlainCallbackHandler;
-import net.spy.memcached.transcoders.SerializingTranscoder;
-import play.Logger;
-import play.Play;
-import play.exceptions.ConfigurationException;
-
 /**
  * Memcached implementation (using http://code.google.com/p/spymemcached/)
- *
+ * <p/>
  * expiration is specified in seconds
  */
 public class MemcachedImpl implements CacheImpl {
@@ -38,7 +38,7 @@ public class MemcachedImpl implements CacheImpl {
     SerializingTranscoder tc;
 
     public static MemcachedImpl getInstance() throws IOException {
-      return getInstance(false);
+        return getInstance(false);
     }
 
     public static MemcachedImpl getInstance(boolean forceClientInit) throws IOException {
@@ -91,7 +91,7 @@ public class MemcachedImpl implements CacheImpl {
 
     public void initClient() throws IOException {
         System.setProperty("net.spy.log.LoggerImpl", "net.spy.memcached.compat.log.Log4JLogger");
-        
+
         List<InetSocketAddress> addrs;
         if (Play.configuration.containsKey("memcached.host")) {
             addrs = AddrUtil.getAddresses(Play.configuration.getProperty("memcached.host"));
@@ -106,22 +106,22 @@ public class MemcachedImpl implements CacheImpl {
         } else {
             throw new ConfigurationException("Bad configuration for memcached: missing host(s)");
         }
-        
+
         if (Play.configuration.containsKey("memcached.user")) {
             String memcacheUser = Play.configuration.getProperty("memcached.user");
             String memcachePassword = Play.configuration.getProperty("memcached.password");
             if (memcachePassword == null) {
                 throw new ConfigurationException("Bad configuration for memcached: missing password");
             }
-            
+
             // Use plain SASL to connect to memcached
             AuthDescriptor ad = new AuthDescriptor(new String[]{"PLAIN"},
-                                    new PlainCallbackHandler(memcacheUser, memcachePassword));
+                    new PlainCallbackHandler(memcacheUser, memcachePassword));
             ConnectionFactory cf = new ConnectionFactoryBuilder()
-                                        .setProtocol(ConnectionFactoryBuilder.Protocol.BINARY)
-                                        .setAuthDescriptor(ad)
-                                        .build();
-            
+                    .setProtocol(ConnectionFactoryBuilder.Protocol.BINARY)
+                    .setAuthDescriptor(ad)
+                    .build();
+
             client = new MemcachedClient(cf, addrs);
         } else {
             client = new MemcachedClient(addrs);

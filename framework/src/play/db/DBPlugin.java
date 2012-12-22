@@ -1,6 +1,5 @@
 package play.db;
 
-import com.mchange.v2.c3p0.ConnectionCustomizer;
 import play.Play;
 import play.PlayPlugin;
 import play.mvc.Http;
@@ -11,7 +10,11 @@ import java.sql.Connection;
 import java.sql.Driver;
 import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Properties;
+import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,7 +30,7 @@ public class DBPlugin extends PlayPlugin {
     public boolean rawInvocation(Request request, Response response) throws Exception {
         if (Play.mode.isDev() && request.path.equals("/@db")) {
             response.status = Http.StatusCode.MOVED;
-            String serverOptions[] = new String[] { };
+            String serverOptions[] = new String[]{};
 
             // For H2 embeded database, we'll also start the Web console
             if (h2Server != null) {
@@ -40,9 +43,9 @@ public class DBPlugin extends PlayPlugin {
             }
 
             if (!domain.equals("localhost")) {
-                serverOptions = new String[] {"-webAllowOthers"};
+                serverOptions = new String[]{"-webAllowOthers"};
             }
-            
+
             h2Server = org.h2.tools.Server.createWebServer(serverOptions);
             h2Server.start();
 
@@ -78,7 +81,7 @@ public class DBPlugin extends PlayPlugin {
      */
     protected boolean isDefaultDBConfigPresent(Properties props) {
         Pattern pattern = Pattern.compile("^db(?:$|\\..*)");
-        for( String propName : props.stringPropertyNames()) {
+        for (String propName : props.stringPropertyNames()) {
             Matcher m = pattern.matcher(propName);
             if (m.find()) {
                 return true;
@@ -89,14 +92,15 @@ public class DBPlugin extends PlayPlugin {
 
     /**
      * Looks for extra db configs in config.
-     *
+     * <p/>
      * Properties starting with 'db_'
+     *
      * @return list of all extra db config names found
      */
     protected Set<String> detectedExtraDBConfigs(Properties props) {
         Set<String> names = new LinkedHashSet<String>(0); //preserve order
         Pattern pattern = Pattern.compile("^db\\_([^\\.]+)(?:$|\\..*)");
-        for( String propName : props.stringPropertyNames()) {
+        for (String propName : props.stringPropertyNames()) {
             Matcher m = pattern.matcher(propName);
             if (m.find()) {
                 String configName = m.group(1);

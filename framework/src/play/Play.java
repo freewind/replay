@@ -1,17 +1,5 @@
 package play;
 
-import java.io.File;
-import java.io.InputStreamReader;
-import java.io.BufferedReader;
-import java.io.LineNumberReader;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URL;
-import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import play.cache.Cache;
 import play.classloading.ApplicationClasses;
 import play.classloading.ApplicationClassloader;
@@ -24,6 +12,26 @@ import play.plugins.PluginCollection;
 import play.templates.TemplateLoader;
 import play.utils.OrderSafeProperties;
 import play.vfs.VirtualFile;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.LineNumberReader;
+import java.net.URI;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Main framework class
@@ -52,6 +60,7 @@ public class Play {
             return this == PROD;
         }
     }
+
     /**
      * Is the application initialized
      */
@@ -145,6 +154,7 @@ public class Play {
      * Readonly list containing currently enabled plugins.
      * This list is updated from pluginCollection when pluginCollection is modified
      * Play plugins
+     *
      * @deprecated Use pluginCollection instead.
      */
     @Deprecated
@@ -343,7 +353,7 @@ public class Play {
         extractHttpPort();
         // Plugins
         pluginCollection.onConfigurationRead();
-     }
+    }
 
     private static void extractHttpPort() {
         final String javaCommand = System.getProperty("sun.java.command", "");
@@ -355,25 +365,25 @@ public class Play {
 
 
     private static Properties readOneConfigurationFile(String filename) {
-        Properties propsFromFile=null;
+        Properties propsFromFile = null;
 
         VirtualFile appRoot = VirtualFile.open(applicationPath);
-        
+
         VirtualFile conf = appRoot.child("conf/" + filename);
         if (confs.contains(conf)) {
             throw new RuntimeException("Detected recursive @include usage. Have seen the file " + filename + " before");
         }
-        
+
         try {
             propsFromFile = IO.readUtf8Properties(conf.inputstream());
         } catch (RuntimeException e) {
             if (e.getCause() instanceof IOException) {
-                Logger.fatal("Cannot read "+filename);
+                Logger.fatal("Cannot read " + filename);
                 fatalServerErrorOccurred();
             }
         }
         confs.add(conf);
-        
+
         // OK, check for instance specifics configuration
         Properties newConfiguration = new OrderSafeProperties();
         Pattern pattern = Pattern.compile("^%([a-zA-Z0-9_\\-]+)\\.(.*)$");
@@ -427,7 +437,7 @@ public class Play {
             if (key.toString().startsWith("@include.")) {
                 try {
                     String filenameToInclude = propsFromFile.getProperty(key.toString());
-                    toInclude.putAll( readOneConfigurationFile(filenameToInclude) );
+                    toInclude.putAll(readOneConfigurationFile(filenameToInclude));
                 } catch (Exception ex) {
                     Logger.warn("Missing include: %s", key);
                 }
@@ -449,7 +459,7 @@ public class Play {
                 stop();
             }
 
-            if( standalonePlayServer) {
+            if (standalonePlayServer) {
                 // Can only register shutdown-hook if running as standalone server
                 if (!shutdownHookEnabled) {
                     //registers shutdown hook - Now there's a good chance that we can notify
@@ -547,11 +557,17 @@ public class Play {
 
         } catch (PlayException e) {
             started = false;
-            try { Cache.stop(); } catch(Exception ignored) {}
+            try {
+                Cache.stop();
+            } catch (Exception ignored) {
+            }
             throw e;
         } catch (Exception e) {
             started = false;
-            try { Cache.stop(); } catch(Exception ignored) {}
+            try {
+                Cache.stop();
+            } catch (Exception ignored) {
+            }
             throw new UnexpectedException(e);
         }
     }
@@ -620,11 +636,11 @@ public class Play {
         }
         try {
             pluginCollection.beforeDetectingChanges();
-            if(!pluginCollection.detectClassesChange()) {
+            if (!pluginCollection.detectClassesChange()) {
                 classloader.detectChanges();
             }
             Router.detectChanges(ctxPath);
-            for(VirtualFile conf : confs) {
+            for (VirtualFile conf : confs) {
                 if (conf.lastModified() > startedAt) {
                     start();
                     return;
@@ -646,7 +662,6 @@ public class Play {
     public static <T> T plugin(Class<T> clazz) {
         return (T) pluginCollection.getPluginInstance((Class<? extends PlayPlugin>) clazz);
     }
-
 
 
     /**
@@ -721,10 +736,10 @@ public class Play {
         if (localModules.exists() && localModules.isDirectory()) {
             for (File module : localModules.listFiles()) {
                 String moduleName = module.getName();
-		if (moduleName.startsWith(".")) {
-			Logger.info("Module %s is ignored, name starts with a dot", moduleName);
-			continue;
-		}
+                if (moduleName.startsWith(".")) {
+                    Logger.info("Module %s is ignored, name starts with a dot", moduleName);
+                    continue;
+                }
                 if (moduleName.contains("-")) {
                     moduleName = moduleName.substring(0, moduleName.indexOf("-"));
                 }
@@ -796,9 +811,10 @@ public class Play {
     /**
      * Returns true if application is running in test-mode.
      * Test-mode is resolved from the framework id.
-     *
+     * <p/>
      * Your app is running in test-mode if the framwork id (Play.id)
      * is 'test' or 'test-?.*'
+     *
      * @return true if testmode
      */
     public static boolean runningInTestMode() {

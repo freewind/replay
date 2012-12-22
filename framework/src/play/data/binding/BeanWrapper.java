@@ -1,13 +1,21 @@
 package play.data.binding;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.*;
-import java.util.*;
-
 import play.Logger;
 import play.classloading.enhancers.PropertiesEnhancer.PlayPropertyAccessor;
 import play.exceptions.UnexpectedException;
-import play.utils.Utils;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -145,13 +153,19 @@ public abstract class BeanWrapper {
         JavaBeanWrapper(Class<?> forClass) {
             super(forClass);
         }
-        @Override String getPropertyName(Method method) {
+
+        @Override
+        String getPropertyName(Method method) {
             return method.getName().substring(3, 4).toLowerCase() + method.getName().substring(4);
         }
-        @Override boolean isSetter(Method method) {
+
+        @Override
+        boolean isSetter(Method method) {
             return (!method.isAnnotationPresent(PlayPropertyAccessor.class) && method.getName().startsWith("set") && method.getName().length() > 3 && method.getParameterTypes().length == 1 && (method.getModifiers() & notaccessibleMethod) == 0);
         }
-        @Override Collection<Field> getFields(Class<?> forClass) {
+
+        @Override
+        Collection<Field> getFields(Class<?> forClass) {
             final Collection<Field> fields = new ArrayList<Field>();
             for (Field field : forClass.getFields()) {
                 if ((field.getModifiers() & notwritableField) != 0) {
@@ -167,21 +181,27 @@ public abstract class BeanWrapper {
         ScalaBeanWrapper(Class<?> forClass) {
             super(forClass);
         }
-        @Override String getPropertyName(Method method) {
+
+        @Override
+        String getPropertyName(Method method) {
             return method.getName().substring(0, method.getName().length() - 4);
         }
-        @Override boolean isSetter(Method method) {
+
+        @Override
+        boolean isSetter(Method method) {
             return (!method.isAnnotationPresent(PlayPropertyAccessor.class) && method.getName().endsWith("_$eq") && method.getParameterTypes().length == 1 && (method.getModifiers() & notaccessibleMethod) == 0);
         }
-        @Override Collection<Field> getFields(Class<?> forClass) {
+
+        @Override
+        Collection<Field> getFields(Class<?> forClass) {
             return Arrays.asList(forClass.getDeclaredFields());
         }
     }
 
-     /**
-      * Immutable property wrapper
-      */
-     public static class Property {
+    /**
+     * Immutable property wrapper
+     */
+    public static class Property {
         final private Annotation[] annotations;
         final private Method setter;
         final private Field field;
@@ -271,10 +291,10 @@ public abstract class BeanWrapper {
     }
 
     public Object bind(String name, Type type, Map<String, String[]> params, String prefix, Object instance, Annotation[] annotations) throws Exception {
-        RootParamNode paramNode = RootParamNode.convert( params);
+        RootParamNode paramNode = RootParamNode.convert(params);
         // when looking at the old code in BeanBinder and Binder.bindInternal, I
         // think it is correct to use 'name+prefix'
-        Binder.bindBean( paramNode.getChild(name+prefix), instance, annotations);
+        Binder.bindBean(paramNode.getChild(name + prefix), instance, annotations);
         return instance;
     }
 }

@@ -1,5 +1,9 @@
 package play.vfs;
 
+import play.Play;
+import play.exceptions.UnexpectedException;
+import play.libs.IO;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -16,10 +20,6 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import play.Play;
-import play.exceptions.UnexpectedException;
-import play.libs.IO;
 
 /**
  * The VFS used by Play!
@@ -223,19 +223,19 @@ public class VirtualFile {
         Pattern pattern = Pattern.compile("^(\\{(.+?)\\})?(.*)$");
         Matcher matcher = pattern.matcher(relativePath);
 
-        if(matcher.matches()) {
+        if (matcher.matches()) {
             String path = matcher.group(3);
             String module = matcher.group(2);
-            if(module == null || module.equals("?") || module.equals("")) {
+            if (module == null || module.equals("?") || module.equals("")) {
                 return new VirtualFile(Play.applicationPath).child(path);
             } else {
-                if(module.equals("play")) {
+                if (module.equals("play")) {
                     return new VirtualFile(Play.frameworkPath).child(path);
                 }
-                if(module.startsWith("module:")){
+                if (module.startsWith("module:")) {
                     module = module.substring("module:".length());
-                    for(Entry<String, VirtualFile> entry : Play.modules.entrySet()) {
-                        if(entry.getKey().equals(module))
+                    for (Entry<String, VirtualFile> entry : Play.modules.entrySet()) {
+                        if (entry.getKey().equals(module))
                             return entry.getValue().child(path);
                     }
                 }

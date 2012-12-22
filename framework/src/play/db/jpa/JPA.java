@@ -1,35 +1,33 @@
 package play.db.jpa;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.persistence.EntityManager;
-
 import org.hibernate.ejb.Ejb3Configuration;
-
 import play.Logger;
 import play.db.DBConfig;
 import play.exceptions.JPAException;
 
+import javax.persistence.EntityManager;
+import java.util.HashMap;
+import java.util.Map;
+
 
 /**
  * JPA Support
- *
+ * <p/>
  * This class holds reference to all JPA configurations.
  * Each configuration has its own instance of JPAConfig.
- *
+ * <p/>
  * dbConfigName corresponds to properties-names in application.conf.
- *
+ * <p/>
  * The default DBConfig is the one configured using 'db.' in application.conf
- *
+ * <p/>
  * dbConfigName = 'other' is configured like this:
- *
+ * <p/>
  * db_other = mem
  * db_other.user = batman
- *
+ * <p/>
  * This class also preserves backward compatibility by
  * directing static methods to the default JPAConfig-instance
- *
+ * <p/>
  * A particular JPAConfig-instance uses the DBConfig with the same configName
  */
 public class JPA {
@@ -45,7 +43,7 @@ public class JPA {
     protected static void addConfiguration(String configName, Ejb3Configuration cfg) {
         JPAConfig jpaConfig = new JPAConfig(cfg, configName);
         jpaConfigs.put(configName, jpaConfig);
-        if( DBConfig.defaultDbConfigName.equals(configName)) {
+        if (DBConfig.defaultDbConfigName.equals(configName)) {
             _defaultJPAConfig = jpaConfig;
             JPQL.createSingleton();
         }
@@ -57,7 +55,7 @@ public class JPA {
 
     public static JPAConfig getJPAConfig(String jpaConfigName, boolean ignoreError) {
         JPAConfig jpaConfig = jpaConfigs.get(jpaConfigName);
-        if (jpaConfig==null && !ignoreError) {
+        if (jpaConfig == null && !ignoreError) {
             if (!isEnabled()) {
                 // Show simpler error message if JPA is not enabled
                 throw new JPAException("The JPA context is not initialized. JPA Entity Manager automatically start " +
@@ -71,12 +69,12 @@ public class JPA {
     }
 
     protected static void close() {
-        for( JPAConfig jpaConfig : jpaConfigs.values()) {
+        for (JPAConfig jpaConfig : jpaConfigs.values()) {
             // do our best to close the JPA config
             try {
                 jpaConfig.close();
             } catch (Exception e) {
-                Logger.error("Error closing JPA config "+jpaConfig.getConfigName(), e);
+                Logger.error("Error closing JPA config " + jpaConfig.getConfigName(), e);
             }
         }
         jpaConfigs.clear();
@@ -85,6 +83,7 @@ public class JPA {
 
     /**
      * clear current JPA context and transaction
+     *
      * @param rollback shall current transaction be committed (false) or cancelled (true)
      */
     public static void closeTx(boolean rollback) {
@@ -95,8 +94,8 @@ public class JPA {
                 try {
                     jpaConfig.getJPAContext().closeTx(rollback);
                 } catch (Exception e) {
-                    Logger.error("Error closing transaction "+jpaConfig.getConfigName(), e);
-                    error=true;
+                    Logger.error("Error closing transaction " + jpaConfig.getConfigName(), e);
+                    error = true;
                 }
             }
         }
@@ -107,7 +106,7 @@ public class JPA {
     }
 
     private static JPAConfig getDefaultJPAConfig() {
-        if (_defaultJPAConfig==null) {
+        if (_defaultJPAConfig == null) {
             throw new JPAException("The JPA context is not initialized. JPA Entity Manager automatically start " +
                     "when one or more classes annotated with the @javax.persistence.Entity annotation " +
                     "are found in the application.");
@@ -116,10 +115,9 @@ public class JPA {
     }
 
 
-    
     /*
      * Retrieve the current entityManager
-     */ 
+     */
     public static EntityManager em() {
         return getDefaultJPAConfig().getJPAContext().em();
     }
@@ -148,7 +146,7 @@ public class JPA {
     /*
      * Build a new entityManager.
      * (In most case you want to use the local entityManager with em)
-     */ 
+     */
     public static EntityManager newEntityManager() {
         return getDefaultJPAConfig().newEntityManager();
     }

@@ -1,12 +1,13 @@
 package play.classloading;
 
+import play.Logger;
+import play.Play;
+import play.PlayPlugin;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.security.MessageDigest;
-import play.Logger;
-import play.Play;
-import play.PlayPlugin;
 
 /**
  * Used to speed up compilation time
@@ -15,6 +16,7 @@ public class BytecodeCache {
 
     /**
      * Delete the bytecode
+     *
      * @param name Cache name
      */
     public static void deleteBytecode(String name) {
@@ -33,7 +35,8 @@ public class BytecodeCache {
 
     /**
      * Retrieve the bytecode if source has not changed
-     * @param name The cache name
+     *
+     * @param name   The cache name
      * @param source The source code
      * @return The bytecode
      */
@@ -77,9 +80,10 @@ public class BytecodeCache {
 
     /**
      * Cache the bytecode
+     *
      * @param byteCode The bytecode
-     * @param name The cache name
-     * @param source The corresponding source
+     * @param name     The cache name
+     * @param source   The corresponding source
      */
     public static void cacheBytecode(byte[] byteCode, String name, String source) {
         try {
@@ -108,7 +112,7 @@ public class BytecodeCache {
     static String hash(String text) {
         try {
             StringBuffer plugins = new StringBuffer();
-            for(PlayPlugin plugin : Play.pluginCollection.getEnabledPlugins()) {
+            for (PlayPlugin plugin : Play.pluginCollection.getEnabledPlugins()) {
                 plugins.append(plugin.getClass().getName());
             }
             MessageDigest messageDigest = MessageDigest.getInstance("MD5");

@@ -23,27 +23,38 @@ import play.exceptions.JPAException;
 import play.exceptions.UnexpectedException;
 import play.utils.Utils;
 
+import javax.persistence.Embeddable;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.EntityManager;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.IdClass;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.MappedSuperclass;
 import javax.persistence.NoResultException;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.PersistenceException;
 import javax.persistence.Query;
 import javax.persistence.Transient;
-import javax.persistence.*;
 import java.beans.PropertyDescriptor;
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 /**
  * JPA Plugin
@@ -72,7 +83,7 @@ public class JPAPlugin extends PlayPlugin {
                     StringBuilder q = new StringBuilder().append("from ").append(clazz.getName()).append(" o where");
                     int keyIdx = 1;
                     for (String keyName : keyNames) {
-                            q.append(" o.").append(keyName).append(" = ?").append(keyIdx++).append(" and ");
+                        q.append(" o.").append(keyName).append(" = ?").append(keyIdx++).append(" and ");
                     }
                     if (q.length() > 4) {
                         q = q.delete(q.length() - 4, q.length());
@@ -82,8 +93,8 @@ public class JPAPlugin extends PlayPlugin {
                     Class[] pk = new JPAModelLoader(clazz).keyTypes();
                     int j = 0;
                     for (ParamNode id : ids) {
-                        if (id.getValues() == null || id.getValues().length == 0 || id.getFirstValue(null)== null || id.getFirstValue(null).trim().length() <= 0 ) {
-                             // We have no ids, it is a new entity
+                        if (id.getValues() == null || id.getValues().length == 0 || id.getFirstValue(null) == null || id.getFirstValue(null).trim().length() <= 0) {
+                            // We have no ids, it is a new entity
                             return GenericModel.create(rootParamNode, name, clazz, annotations);
                         }
                         query.setParameter(j + 1, Binder.directBind(id.getOriginalKey(), annotations, id.getValues()[0], pk[j++], null));
@@ -845,77 +856,77 @@ public class JPAPlugin extends PlayPlugin {
     // This is really hacky. We should move to something better than Hibernate like EBEAN
     private static class PlayInterceptor extends EmptyInterceptor {
 
-		   @Override
-	       public int[] findDirty(Object o, Serializable id, Object[] arg2, Object[] arg3, String[] arg4, Type[] arg5) {
-	       		if (o instanceof JPABase && !((JPABase) o).willBeSaved) {
-	                return new int[0];
-	            }
-	            return null;
-	       }
+        @Override
+        public int[] findDirty(Object o, Serializable id, Object[] arg2, Object[] arg3, String[] arg4, Type[] arg5) {
+            if (o instanceof JPABase && !((JPABase) o).willBeSaved) {
+                return new int[0];
+            }
+            return null;
+        }
 
-		   @Override
-           public boolean onCollectionUpdate(Object collection, Serializable key) throws CallbackException {
-                if (collection instanceof PersistentCollection) {
-                    Object o = ((PersistentCollection) collection).getOwner();
-                   	if (o instanceof JPABase) {
-						if (entities.get() != null) {
-                           	return ((JPABase) o).willBeSaved || ((JPABase) entities.get()).willBeSaved;
-						} else {
-							return ((JPABase) o).willBeSaved;
-						}
+        @Override
+        public boolean onCollectionUpdate(Object collection, Serializable key) throws CallbackException {
+            if (collection instanceof PersistentCollection) {
+                Object o = ((PersistentCollection) collection).getOwner();
+                if (o instanceof JPABase) {
+                    if (entities.get() != null) {
+                        return ((JPABase) o).willBeSaved || ((JPABase) entities.get()).willBeSaved;
+                    } else {
+                        return ((JPABase) o).willBeSaved;
                     }
-                } else {
-                    System.out.println("HOO: Case not handled !!!");
                 }
-          		return super.onCollectionUpdate(collection, key);
-          }
+            } else {
+                System.out.println("HOO: Case not handled !!!");
+            }
+            return super.onCollectionUpdate(collection, key);
+        }
 
-          @Override
-          public boolean onCollectionRecreate(Object collection, Serializable key) throws CallbackException {
-              if (collection instanceof PersistentCollection) {
-                  Object o = ((PersistentCollection) collection).getOwner();
-          	 	if (o instanceof JPABase) {
-				if (entities.get() != null) {
-                    return ((JPABase) o).willBeSaved || ((JPABase) entities.get()).willBeSaved;
-				} else {
-					return ((JPABase) o).willBeSaved;
-				}
-                   } 
-			} else {
-           		System.out.println("HOO: Case not handled !!!");
-        	}
+        @Override
+        public boolean onCollectionRecreate(Object collection, Serializable key) throws CallbackException {
+            if (collection instanceof PersistentCollection) {
+                Object o = ((PersistentCollection) collection).getOwner();
+                if (o instanceof JPABase) {
+                    if (entities.get() != null) {
+                        return ((JPABase) o).willBeSaved || ((JPABase) entities.get()).willBeSaved;
+                    } else {
+                        return ((JPABase) o).willBeSaved;
+                    }
+                }
+            } else {
+                System.out.println("HOO: Case not handled !!!");
+            }
             return super.onCollectionRecreate(collection, key);
         }
 
-		@Override
+        @Override
         public boolean onCollectionRemove(Object collection, Serializable key) throws CallbackException {
-		 	if (collection instanceof PersistentCollection) {
+            if (collection instanceof PersistentCollection) {
                 Object o = ((PersistentCollection) collection).getOwner();
-	            if (o instanceof JPABase) {
-					if (entities.get() != null) {
-                   		return ((JPABase) o).willBeSaved || ((JPABase) entities.get()).willBeSaved;
-					} else {
-						return ((JPABase) o).willBeSaved;
-					}
+                if (o instanceof JPABase) {
+                    if (entities.get() != null) {
+                        return ((JPABase) o).willBeSaved || ((JPABase) entities.get()).willBeSaved;
+                    } else {
+                        return ((JPABase) o).willBeSaved;
+                    }
                 }
-			} else {
-	          	System.out.println("HOO: Case not handled !!!");
-	        }
-	        return super.onCollectionRemove(collection, key);
-		}
+            } else {
+                System.out.println("HOO: Case not handled !!!");
+            }
+            return super.onCollectionRemove(collection, key);
+        }
 
-		protected ThreadLocal<Object> entities = new ThreadLocal<Object>();
-		
-		@Override
-	 	public boolean onSave(Object entity, Serializable id, Object[] state, String[] propertyNames, Type[] types)  {
-			entities.set(entity);
-			return super.onSave(entity, id, state, propertyNames, types);
-		}
-				
-		@Override
-		public void afterTransactionCompletion(org.hibernate.Transaction tx) {
-			entities.remove();
-		}
-    
+        protected ThreadLocal<Object> entities = new ThreadLocal<Object>();
+
+        @Override
+        public boolean onSave(Object entity, Serializable id, Object[] state, String[] propertyNames, Type[] types) {
+            entities.set(entity);
+            return super.onSave(entity, id, state, propertyNames, types);
+        }
+
+        @Override
+        public void afterTransactionCompletion(org.hibernate.Transaction tx) {
+            entities.remove();
+        }
+
     }
 }

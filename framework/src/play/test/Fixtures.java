@@ -15,9 +15,8 @@ import play.data.binding.RootParamNode;
 import play.data.binding.types.DateBinder;
 import play.db.DB;
 import play.db.DBConfig;
-import play.db.DBPlugin;
-import play.db.SQLSplitter;
 import play.db.Model;
+import play.db.SQLSplitter;
 import play.db.jpa.JPAPlugin;
 import play.exceptions.DatabaseException;
 import play.exceptions.UnexpectedException;
@@ -26,6 +25,7 @@ import play.libs.IO;
 import play.templates.TemplateLoader;
 import play.vfs.VirtualFile;
 
+import javax.persistence.Entity;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,19 +35,28 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javax.persistence.Entity;
 
 public class Fixtures {
 
     static Pattern keyPattern = Pattern.compile("([^(]+)\\(([^)]+)\\)");
 
     public static void executeSQL(String sqlScript) {
-        for(CharSequence sql : new SQLSplitter(sqlScript)) {
+        for (CharSequence sql : new SQLSplitter(sqlScript)) {
             final String s = sql.toString().trim();
-            if(s.length() > 0) {
+            if (s.length() > 0) {
                 DB.execute(s);
             }
         }
@@ -59,6 +68,7 @@ public class Fixtures {
 
     /**
      * Delete all Model instances for the given types using the underlying persistence mechanisms
+     *
      * @param types Types to delete
      */
     public static void delete(Class<? extends Model>... types) {
@@ -73,7 +83,7 @@ public class Fixtures {
             if (type.isAnnotationPresent(javax.persistence.Entity.class)) {
                 try {
                     Model.Manager.factoryFor(type).deleteAll();
-                } catch(Exception e) {
+                } catch (Exception e) {
                     Logger.error(e, "While deleting " + type + " instances");
                 }
             }
@@ -88,6 +98,7 @@ public class Fixtures {
 
     /**
      * Delete all Model instances for the given types using the underlying persistence mechanisms
+     *
      * @param types Types to delete
      */
     public static void delete(List<Class<? extends Model>> classes) {
@@ -106,9 +117,9 @@ public class Fixtures {
     public static void deleteAllModels() {
         List<Class<? extends Model>> classes = new ArrayList<Class<? extends Model>>();
         for (ApplicationClasses.ApplicationClass c : Play.classes.getAssignableClasses(Model.class)) {
-		   if( c.javaClass.isAnnotationPresent(Entity.class) ) {
-		       classes.add((Class<? extends Model>)c.javaClass);
-		    }
+            if (c.javaClass.isAnnotationPresent(Entity.class)) {
+                classes.add((Class<? extends Model>) c.javaClass);
+            }
         }
         for (DBConfig dbConfig : DB.getDBConfigs()) {
             disableForeignKeyConstraints(dbConfig);
@@ -118,6 +129,7 @@ public class Fixtures {
 
     /**
      * Use deleteDatabase() instead
+     *
      * @deprecated use {@link deleteDatabase()} instead
      */
     @Deprecated
@@ -125,27 +137,28 @@ public class Fixtures {
         deleteDatabase();
     }
 
-    static String[] dontDeleteTheseTables = new String[] {"play_evolutions"};
+    static String[] dontDeleteTheseTables = new String[]{"play_evolutions"};
 
     /**
      * Flush the entire JDBC database for all configured databases.
      */
     public static void deleteDatabase() {
-        for ( DBConfig dbConfig : DB.getDBConfigs()) {
+        for (DBConfig dbConfig : DB.getDBConfigs()) {
             deleteDatabase(dbConfig.getDBConfigName());
         }
     }
 
     /**
      * Flush the entire specified JDBC database
+     *
      * @param dbConfigName specifies which configured database to delete - use null to delete the default database
      */
     public static void deleteDatabase(String dbConfigName) {
 
-        if (dbConfigName==null) {
+        if (dbConfigName == null) {
             dbConfigName = DBConfig.defaultDbConfigName;
         }
-        
+
         try {
             List<String> names = new ArrayList<String>();
             DBConfig dbConfig = DB.getDBConfig(dbConfigName);
@@ -156,7 +169,7 @@ public class Fixtures {
             }
             disableForeignKeyConstraints(dbConfig);
             for (String name : names) {
-                if(Arrays.binarySearch(dontDeleteTheseTables, name) < 0) {
+                if (Arrays.binarySearch(dontDeleteTheseTables, name) < 0) {
                     if (Logger.isTraceEnabled()) {
                         Logger.trace("Dropping content of table %s", name);
                     }
@@ -188,6 +201,7 @@ public class Fixtures {
     /**
      * Load Model instances from a YAML file and persist them using the underlying persistence mechanism.
      * The format of the YAML file is constrained, see the Fixtures manual page
+     *
      * @param name Name of a YAML file somewhere in the classpath (or conf/)
      */
     protected static void loadModels(String name, Map<String, Object> idCache) {
@@ -227,14 +241,14 @@ public class Fixtures {
 
 
                         // Those are the properties that were parsed from the YML file
-                        final Map<?, ?> entityValues =  objects.get(key);
+                        final Map<?, ?> entityValues = objects.get(key);
 
                         // Prefix is object, why is that?
                         final Map<String, String[]> fields = serialize(entityValues, "object");
 
 
                         @SuppressWarnings("unchecked")
-                        Class<Model> cType = (Class<Model>)Play.classloader.loadClass(type);
+                        Class<Model> cType = (Class<Model>) Play.classloader.loadClass(type);
                         final Map<String, String[]> resolvedFields = resolveDependencies(cType, fields, idCache);
 
                         RootParamNode rootParamNode = ParamNode.convert(resolvedFields);
@@ -242,7 +256,7 @@ public class Fixtures {
                         if (Model.class.isAssignableFrom(cType)) {
 
                             Model model = (Model) Binder.bind(rootParamNode, "object", cType, cType, null);
-                            for(Field f : model.getClass().getFields()) {
+                            for (Field f : model.getClass().getFields()) {
                                 if (f.getType().isAssignableFrom(Map.class)) {
                                     f.set(model, objects.get(key).get(f.getName()));
                                 }
@@ -254,11 +268,10 @@ public class Fixtures {
 
                             Class<?> tType = cType;
                             while (!tType.equals(Object.class)) {
-                                idCache.put(tType.getName() + "-" + id, Model.Manager.factoryFor(cType).keyValue((Model)model));
+                                idCache.put(tType.getName() + "-" + id, Model.Manager.factoryFor(cType).keyValue((Model) model));
                                 tType = tType.getSuperclass();
                             }
-                        }
-                        else {
+                        } else {
                             idCache.put(cType.getName() + "-" + id, Binder.bind(rootParamNode, "object", cType, cType, null));
                         }
                     }
@@ -317,6 +330,7 @@ public class Fixtures {
     /**
      * Load and parse a plain YAML file and returns the corresponding Java objects.
      * The YAML parser used is SnakeYAML (http://code.google.com/p/snakeyaml/)
+     *
      * @param name Name of a YAML file somewhere in the classpath (or conf/)me
      * @return Java objects
      */
@@ -327,27 +341,30 @@ public class Fixtures {
     /**
      * Load and parse a plain YAML file and returns the corresponding Java List.
      * The YAML parser used is SnakeYAML (http://code.google.com/p/snakeyaml/)
+     *
      * @param name Name of a YAML file somewhere in the classpath (or conf/)me
      * @return Java List representing the YAML data
      */
     public static List<?> loadYamlAsList(String name) {
-        return (List<?>)loadYaml(name);
+        return (List<?>) loadYaml(name);
     }
 
     /**
      * Load and parse a plain YAML file and returns the corresponding Java Map.
      * The YAML parser used is SnakeYAML (http://code.google.com/p/snakeyaml/)
+     *
      * @param name Name of a YAML file somewhere in the classpath (or conf/)me
      * @return Java Map representing the YAML data
      */
-    public static Map<?,?> loadYamlAsMap(String name) {
-        return (Map<?,?>)loadYaml(name);
+    public static Map<?, ?> loadYamlAsMap(String name) {
+        return (Map<?, ?>) loadYaml(name);
     }
 
     /**
      * Load and parse a plain YAML file and returns the corresponding Java Map.
      * The YAML parser used is SnakeYAML (http://code.google.com/p/snakeyaml/)
-     * @param name Name of a YAML file somewhere in the classpath (or conf/)me
+     *
+     * @param name  Name of a YAML file somewhere in the classpath (or conf/)me
      * @param clazz the expected class
      * @return Object representing the YAML data
      */
@@ -355,7 +372,7 @@ public class Fixtures {
     public static <T> T loadYaml(String name, Class<T> clazz) {
         Yaml yaml = new Yaml(new CustomClassLoaderConstructor(clazz, Play.classloader));
         yaml.setBeanAccess(BeanAccess.FIELD);
-        return (T)loadYaml(name, yaml);
+        return (T) loadYaml(name, yaml);
     }
 
     @SuppressWarnings("unchecked")
@@ -373,7 +390,7 @@ public class Fixtures {
                 throw new RuntimeException("Cannot load fixture " + name + ", the file was not found");
             }
             Object o = yaml.load(is);
-            return (T)o;
+            return (T) o;
         } catch (ScannerException e) {
             throw new YAMLException(e, yamlFile);
         } catch (Throwable e) {
@@ -384,6 +401,7 @@ public class Fixtures {
 
     /**
      * Delete a directory recursively
+     *
      * @param path relative path of the directory to delete
      */
     public static void deleteDirectory(String path) {
@@ -398,7 +416,6 @@ public class Fixtures {
 
 
     /**
-     *
      * TODO: reuse beanutils or MapUtils?
      *
      * @param entityProperties
@@ -469,8 +486,8 @@ public class Fixtures {
         // Iterate through the Entity property list
         // @Embedded are not managed by the JPA plugin
         // This is not the nicest way of doing things.
-         //modelFields =  Model.Manager.factoryFor(type).listProperties();
-        final List<Model.Property> modelFields =  new JPAPlugin.JPAModelLoader(type).listProperties();
+        //modelFields =  Model.Manager.factoryFor(type).listProperties();
+        final List<Model.Property> modelFields = new JPAPlugin.JPAModelLoader(type).listProperties();
 
         for (Model.Property field : modelFields) {
             // If we have a relation, get the matching object
@@ -489,19 +506,19 @@ public class Fixtures {
                     }
                     // Set the primary keys instead of the object itself.
                     // Model.Manager.factoryFor((Class<? extends Model>)field.relationType).keyName() returns the primary key label.
-                    if (Model.class.isAssignableFrom(field.relationType )) {
-                        resolvedYml.put("object." + field.name + "." + Model.Manager.factoryFor((Class<? extends Model>)field.relationType).keyName(), resolvedIds);
+                    if (Model.class.isAssignableFrom(field.relationType)) {
+                        resolvedYml.put("object." + field.name + "." + Model.Manager.factoryFor((Class<? extends Model>) field.relationType).keyName(), resolvedIds);
                     } else {
                         // Might be an embedded object
                         final String id = field.relationType.getName() + "-" + ids[0];
                         Object o = idCache.get(id);
                         // This can be a composite key
                         if (o.getClass().isArray()) {
-                            for (Object a : (Object[])o) {
+                            for (Object a : (Object[]) o) {
                                 for (Field f : field.relationType.getDeclaredFields()) {
                                     try {
-                                        resolvedYml.put("object." + field.name + "." + f.getName(), new String[] {f.get(a).toString()});
-                                    } catch(Exception e) {
+                                        resolvedYml.put("object." + field.name + "." + f.getName(), new String[]{f.get(a).toString()});
+                                    } catch (Exception e) {
                                         // Ignores
                                     }
                                 }
@@ -509,8 +526,8 @@ public class Fixtures {
                         } else {
                             for (Field f : field.relationType.getDeclaredFields()) {
                                 try {
-                                    resolvedYml.put("object." + field.name + "." + f.getName(), new String[] {f.get(o).toString()});
-                                } catch(Exception e) {
+                                    resolvedYml.put("object." + field.name + "." + f.getName(), new String[]{f.get(o).toString()});
+                                } catch (Exception e) {
                                     // Ignores
                                 }
                             }
@@ -556,24 +573,24 @@ public class Fixtures {
             dbConfig.execute("SET CONSTRAINTS ALL DEFERRED");
             return;
         }
-        
+
         if (dbConfig.getUrl().startsWith("jdbc:sqlserver:")) {
-            Statement exec=null;
+            Statement exec = null;
 
             try {
                 List<String> names = new ArrayList<String>();
-                Connection connection=dbConfig.getConnection();
-                
+                Connection connection = dbConfig.getConnection();
+
                 ResultSet rs = connection.getMetaData().getTables(null, null, null, new String[]{"TABLE"});
                 while (rs.next()) {
                     String name = rs.getString("TABLE_NAME");
                     names.add(name);
                 }
 
-                    // Then we disable all foreign keys
-                exec=connection.createStatement();
-                for (String tableName:names)
-                    exec.addBatch("ALTER TABLE " + tableName+" NOCHECK CONSTRAINT ALL");
+                // Then we disable all foreign keys
+                exec = connection.createStatement();
+                for (String tableName : names)
+                    exec.addBatch("ALTER TABLE " + tableName + " NOCHECK CONSTRAINT ALL");
                 exec.executeBatch();
                 exec.close();
 
@@ -619,25 +636,23 @@ public class Fixtures {
         }
 
         if (dbConfig.getUrl().startsWith("jdbc:sqlserver:")) {
-           Connection connect = null;
-            Statement exec=null;
-            try
-            {
-                connect=dbConfig.getConnection();
+            Connection connect = null;
+            Statement exec = null;
+            try {
+                connect = dbConfig.getConnection();
                 // We must first drop all foreign keys
-                ArrayList<String> checkFKCommands=new ArrayList<String>();
-                exec=connect.createStatement();
-                ResultSet rs=exec.executeQuery("SELECT 'ALTER TABLE ' + TABLE_SCHEMA + '.[' + TABLE_NAME +'] WITH CHECK CHECK CONSTRAINT [' + CONSTRAINT_NAME + ']' FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE CONSTRAINT_TYPE = 'FOREIGN KEY'");
-                while (rs.next())
-                {
+                ArrayList<String> checkFKCommands = new ArrayList<String>();
+                exec = connect.createStatement();
+                ResultSet rs = exec.executeQuery("SELECT 'ALTER TABLE ' + TABLE_SCHEMA + '.[' + TABLE_NAME +'] WITH CHECK CHECK CONSTRAINT [' + CONSTRAINT_NAME + ']' FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE CONSTRAINT_TYPE = 'FOREIGN KEY'");
+                while (rs.next()) {
                     checkFKCommands.add(rs.getString(1));
                 }
                 exec.close();
-                exec=null;
+                exec = null;
 
-                 // Now we have the drop commands, let's execute them
-                exec=connect.createStatement();
-                for (String sql:checkFKCommands)
+                // Now we have the drop commands, let's execute them
+                exec = connect.createStatement();
+                for (String sql : checkFKCommands)
                     exec.addBatch(sql);
                 exec.executeBatch();
                 exec.close();
@@ -645,13 +660,13 @@ public class Fixtures {
                 throw new DatabaseException("Cannot enable foreign keys", ex);
             }
             return;
-          }
+        }
 
         Logger.warn("Fixtures : unable to enable constraints, unsupported database : " + dbConfig.getUrl());
     }
 
     static String getDeleteTableStmt(String url, String name) {
-        if (url.startsWith("jdbc:mysql:") ) {
+        if (url.startsWith("jdbc:mysql:")) {
             return "TRUNCATE TABLE " + name;
         } else if (url.startsWith("jdbc:postgresql:")) {
             return "TRUNCATE TABLE " + name + " cascade";

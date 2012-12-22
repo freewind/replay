@@ -1,22 +1,20 @@
 package play.server;
 
+import org.jboss.netty.bootstrap.ServerBootstrap;
+import org.jboss.netty.channel.ChannelException;
+import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
+import play.Logger;
+import play.Play;
+import play.Play.Mode;
+import play.libs.IO;
+import play.server.ssl.SslHttpServerPipelineFactory;
+
 import java.io.File;
 import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Properties;
 import java.util.concurrent.Executors;
-
-import org.jboss.netty.bootstrap.ServerBootstrap;
-import org.jboss.netty.channel.ChannelException;
-import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory;
-
-import play.Logger;
-import play.Play;
-import play.Play.Mode;
-import play.libs.IO;
-import play.server.ssl.SslHttpServerPipelineFactory;
-import play.vfs.VirtualFile;
 
 public class Server {
 
@@ -136,7 +134,7 @@ public class Server {
                 return a.substring(s.length());
             }
         }
-        return defaultValue; 
+        return defaultValue;
     }
 
     private static void writePID(File root) {

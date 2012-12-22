@@ -1,6 +1,5 @@
 package play.db;
 
-import com.mchange.v2.c3p0.ComboPooledDataSource;
 import org.apache.commons.lang.StringUtils;
 import play.Logger;
 import play.Play;
@@ -16,6 +15,7 @@ import play.mvc.Http.Response;
 import play.mvc.results.Redirect;
 import play.vfs.VirtualFile;
 
+import javax.sql.DataSource;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.Date;
@@ -26,23 +26,22 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Stack;
-import javax.sql.DataSource;
 
 /**
  * Handles migration of data.
- *
+ * <p/>
  * Does only support the default DBConfig
  */
 public class Evolutions extends PlayPlugin {
 
-	/**
-	 * Indicates if evolutions is disabled in application.conf ("evolutions.enabled" property)
-	 */
-	private boolean disabled = false;
-	
+    /**
+     * Indicates if evolutions is disabled in application.conf ("evolutions.enabled" property)
+     */
+    private boolean disabled = false;
+
     protected static DataSource getDatasource() {
         DBConfig dbConfig = DB.getDBConfig(DBConfig.defaultDbConfigName, true);
-        if (dbConfig==null) {
+        if (dbConfig == null) {
             return null;
         }
         return dbConfig.getDatasource();
@@ -173,9 +172,9 @@ public class Evolutions extends PlayPlugin {
             }
 
 
-
         }
     }
+
     static File evolutionsDirectory = Play.getFile("db/evolutions");
 
     @Override
@@ -200,7 +199,7 @@ public class Evolutions extends PlayPlugin {
 
     @Override
     public void beforeInvocation() {
-        if(disabled || Play.mode.isProd()) {
+        if (disabled || Play.mode.isProd()) {
             return;
         }
         try {
@@ -217,9 +216,9 @@ public class Evolutions extends PlayPlugin {
 
     @Override
     public void onApplicationStart() {
-    	disabled = "false".equals(Play.configuration.getProperty("evolutions.enabled", "true"));
-    	
-        if (! disabled && Play.mode.isProd()) {
+        disabled = "false".equals(Play.configuration.getProperty("evolutions.enabled", "true"));
+
+        if (!disabled && Play.mode.isProd()) {
             try {
                 checkEvolutionsState();
             } catch (InvalidDatabaseRevision e) {
@@ -230,7 +229,7 @@ public class Evolutions extends PlayPlugin {
             }
         }
     }
-    
+
     public static synchronized void resolve(int revision) {
         try {
             execute("update play_evolutions set state = 'applied' where state = 'applying_up' and id = " + revision);
@@ -264,7 +263,7 @@ public class Evolutions extends PlayPlugin {
                     }
                     // Execute script
                     if (runScript) {
-                       for (CharSequence sql : new SQLSplitter((evolution.applyUp ? evolution.sql_up : evolution.sql_down))) {
+                        for (CharSequence sql : new SQLSplitter((evolution.applyUp ? evolution.sql_up : evolution.sql_down))) {
                             final String s = sql.toString().trim();
                             if (StringUtils.isEmpty(s)) {
                                 continue;
@@ -436,7 +435,7 @@ public class Evolutions extends PlayPlugin {
                 rs.close();
                 rs = connection.getMetaData().getTables(null, null, tableName, null);
                 // Does it exist?
-                if (!rs.next() ) {
+                if (!rs.next()) {
                     // did not find it in uppercase either
                     tableExists = false;
                 }
@@ -479,7 +478,7 @@ public class Evolutions extends PlayPlugin {
         if (jpaDialect != null) {
             try {
                 Class<?> dialectClass = Play.classloader.loadClass(jpaDialect);
-			
+
                 // Oracle 8i dialect is the base class for oracle dialects (at least for now)
                 isOracle = org.hibernate.dialect.Oracle8iDialect.class.isAssignableFrom(dialectClass);
             } catch (ClassNotFoundException e) {

@@ -1,10 +1,5 @@
 package play.db.jpa;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.ParameterizedType;
-import java.util.*;
-import javax.persistence.*;
-
 import play.Play;
 import play.classloading.enhancers.LVEnhancer;
 import play.data.binding.BeanWrapper;
@@ -14,8 +9,31 @@ import play.data.validation.Validation;
 import play.exceptions.UnexpectedException;
 import play.mvc.Scope.Params;
 
+import javax.persistence.EntityManager;
+import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
+import javax.persistence.MappedSuperclass;
+import javax.persistence.NoResultException;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
+import javax.persistence.PostLoad;
+import javax.persistence.PostPersist;
+import javax.persistence.PostUpdate;
+import javax.persistence.Query;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 
 /**
@@ -27,13 +45,13 @@ public class GenericModel extends JPABase {
 
     /**
      * This method is deprecated. Use this instead:
-     *
-     *  public static <T extends JPABase> T create(ParamNode rootParamNode, String name, Class<?> type, Annotation[] annotations)
+     * <p/>
+     * public static <T extends JPABase> T create(ParamNode rootParamNode, String name, Class<?> type, Annotation[] annotations)
      */
     @Deprecated
     public static <T extends JPABase> T create(Class<?> type, String name, Map<String, String[]> params, Annotation[] annotations) {
         ParamNode rootParamNode = ParamNode.convert(params);
-        return (T)create(rootParamNode, name, type, annotations);
+        return (T) create(rootParamNode, name, type, annotations);
     }
 
     public static <T extends JPABase> T create(ParamNode rootParamNode, String name, Class<?> type, Annotation[] annotations) {
@@ -49,15 +67,15 @@ public class GenericModel extends JPABase {
 
     /**
      * This method is deprecated. Use this instead:
-     *
-     *  public static <T extends JPABase> T edit(ParamNode rootParamNode, String name, Object o, Annotation[] annotations)
+     * <p/>
+     * public static <T extends JPABase> T edit(ParamNode rootParamNode, String name, Object o, Annotation[] annotations)
      *
      * @return
      */
     @Deprecated
     public static <T extends JPABase> T edit(Object o, String name, Map<String, String[]> params, Annotation[] annotations) {
         ParamNode rootParamNode = ParamNode.convert(params);
-        return (T)edit( rootParamNode, name, o, annotations);
+        return (T) edit(rootParamNode, name, o, annotations);
     }
 
     @SuppressWarnings("deprecation")
@@ -115,7 +133,7 @@ public class GenericModel extends JPABase {
                                         continue;
                                     }
                                     Query q = em.createQuery("from " + relation + " where " + keyName + " = ?1");
-                                    q.setParameter(1, Binder.directBind(rootParamNode.getOriginalKey(), annotations,_id, Model.Manager.factoryFor((Class<Model>) Play.classloader.loadClass(relation)).keyType(), null));
+                                    q.setParameter(1, Binder.directBind(rootParamNode.getOriginalKey(), annotations, _id, Model.Manager.factoryFor((Class<Model>) Play.classloader.loadClass(relation)).keyType(), null));
                                     try {
                                         l.add(q.getSingleResult());
 
@@ -135,16 +153,16 @@ public class GenericModel extends JPABase {
                                     Object to = q.getSingleResult();
                                     edit(paramNode, field.getName(), to, field.getAnnotations());
                                     // Remove it to prevent us from finding it again later
-                                    paramNode.removeChild( field.getName(), removedNodesList);
+                                    paramNode.removeChild(field.getName(), removedNodesList);
                                     bw.set(field.getName(), o, to);
                                 } catch (NoResultException e) {
                                     Validation.addError(fieldParamNode.getOriginalKey(), "validation.notFound", ids[0]);
                                     // Remove only the key to prevent us from finding it again later
                                     // This how the old impl does it..
                                     fieldParamNode.removeChild(keyName, removedNodesList);
-                                    if (fieldParamNode.getAllChildren().size()==0) {
+                                    if (fieldParamNode.getAllChildren().size() == 0) {
                                         // remove the whole node..
-                                        paramNode.removeChild( field.getName(), removedNodesList);
+                                        paramNode.removeChild(field.getName(), removedNodesList);
                                     }
 
                                 }
@@ -165,19 +183,19 @@ public class GenericModel extends JPABase {
             throw new UnexpectedException(e);
         } finally {
             // restoring changes to paramNode
-            ParamNode.restoreRemovedChildren( removedNodesList );
+            ParamNode.restoreRemovedChildren(removedNodesList);
         }
     }
 
     /**
      * This method is deprecated. Use this instead:
-     *
-     *  public <T extends GenericModel> T edit(ParamNode rootParamNode, String name)
+     * <p/>
+     * public <T extends GenericModel> T edit(ParamNode rootParamNode, String name)
      */
     @Deprecated
     public <T extends GenericModel> T edit(String name, Map<String, String[]> params) {
         ParamNode rootParamNode = ParamNode.convert(params);
-        return (T)edit(rootParamNode, name, this, null);
+        return (T) edit(rootParamNode, name, this, null);
     }
 
     public <T extends GenericModel> T edit(ParamNode rootParamNode, String name) {
@@ -236,6 +254,7 @@ public class GenericModel extends JPABase {
 
     /**
      * Delete the entity.
+     *
      * @return The deleted entity.
      */
     public <T extends JPABase> T delete() {
@@ -249,6 +268,7 @@ public class GenericModel extends JPABase {
 
     /**
      * Count entities
+     *
      * @return number of entities of this class
      */
     public static long count() {
@@ -258,7 +278,8 @@ public class GenericModel extends JPABase {
     /**
      * Count entities with a special query.
      * Example : Long moderatedPosts = Post.count("moderated", true);
-     * @param query HQL query or shortcut
+     *
+     * @param query  HQL query or shortcut
      * @param params Params to bind to the query
      * @return A long
      */
@@ -275,6 +296,7 @@ public class GenericModel extends JPABase {
 
     /**
      * Find the entity with the corresponding id.
+     *
      * @param id The entity id
      * @return The entity
      */
@@ -284,7 +306,8 @@ public class GenericModel extends JPABase {
 
     /**
      * Prepare a query to find entities.
-     * @param query HQL query or shortcut
+     *
+     * @param query  HQL query or shortcut
      * @param params Params to bind to the query
      * @return A JPAQuery
      */
@@ -294,6 +317,7 @@ public class GenericModel extends JPABase {
 
     /**
      * Prepare a query to find *all* entities.
+     *
      * @return A JPAQuery
      */
     public static JPAQuery all() {
@@ -302,7 +326,8 @@ public class GenericModel extends JPABase {
 
     /**
      * Batch delete of entities
-     * @param query HQL query or shortcut
+     *
+     * @param query  HQL query or shortcut
      * @param params Params to bind to the query
      * @return Number of entities deleted
      */
@@ -312,6 +337,7 @@ public class GenericModel extends JPABase {
 
     /**
      * Delete all entities
+     *
      * @return Number of entities deleted
      */
     public static int deleteAll() {
@@ -350,8 +376,8 @@ public class GenericModel extends JPABase {
 
         /**
          * Bind a JPQL named parameter to the current query.
-         * Careful, this will also bind count results. This means that Integer get transformed into long 
-         *  so hibernate can do the right thing. Use the setParameter if you just want to set parameters. 
+         * Careful, this will also bind count results. This means that Integer get transformed into long
+         * so hibernate can do the right thing. Use the setParameter if you just want to set parameters.
          */
         public JPAQuery bind(String name, Object param) {
             if (param.getClass().isArray()) {
@@ -364,16 +390,17 @@ public class GenericModel extends JPABase {
             return this;
         }
 
-		/** 
-		 * Set a named parameter for this query.
-		 **/
-  		public JPAQuery setParameter(String name, Object param) {
-			query.setParameter(name, param);
-	        return this;
-		}
+        /**
+         * Set a named parameter for this query.
+         */
+        public JPAQuery setParameter(String name, Object param) {
+            query.setParameter(name, param);
+            return this;
+        }
 
         /**
          * Retrieve all results of the query
+         *
          * @return A list of entities
          */
         public <T> List<T> fetch() {
@@ -386,6 +413,7 @@ public class GenericModel extends JPABase {
 
         /**
          * Retrieve results of the query
+         *
          * @param max Max results to fetch
          * @return A list of entities
          */
@@ -400,6 +428,7 @@ public class GenericModel extends JPABase {
 
         /**
          * Set the position to start
+         *
          * @param position Position of the first element
          * @return A new query
          */
@@ -410,7 +439,8 @@ public class GenericModel extends JPABase {
 
         /**
          * Retrieve a page of result
-         * @param page Page number (start at 1)
+         *
+         * @param page   Page number (start at 1)
          * @param length (page length)
          * @return a list of entities
          */

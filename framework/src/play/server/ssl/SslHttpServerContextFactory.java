@@ -6,12 +6,21 @@ import org.bouncycastle.openssl.PasswordFinder;
 import play.Logger;
 import play.Play;
 
-import java.security.cert.X509Certificate;
-import javax.net.ssl.*;
+import javax.net.ssl.KeyManager;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLEngine;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509ExtendedKeyManager;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.net.Socket;
-import java.security.*;
+import java.security.KeyPair;
+import java.security.KeyStore;
+import java.security.Principal;
+import java.security.PrivateKey;
+import java.security.Security;
+import java.security.cert.X509Certificate;
 import java.util.Properties;
 import java.util.Vector;
 
@@ -35,8 +44,7 @@ public class SslHttpServerContextFactory {
             // Made sure play reads the properties
             // Look if we have key and cert files. If we do, we use our own keymanager
             if (Play.getFile(p.getProperty("certificate.key.file", "conf/host.key")).exists()
-                && Play.getFile(p.getProperty("certificate.file", "conf/host.cert")).exists())
-            {
+                    && Play.getFile(p.getProperty("certificate.file", "conf/host.cert")).exists()) {
                 Security.addProvider(new BouncyCastleProvider());
 
                 // Initialize the SSLContext to work with our key managers.
@@ -85,23 +93,23 @@ public class SslHttpServerContextFactory {
                 final Properties p = Play.configuration;
 
                 PEMReader keyReader = new PEMReader(new FileReader(Play.getFile(p.getProperty("certificate.key.file",
-                                                                                               "conf/host.key"))),
-                                                    new PasswordFinder() {
-                    public char[] getPassword() {
-                        return p.getProperty("certificate.password", "secret").toCharArray();
-                    }
-                });
+                        "conf/host.key"))),
+                        new PasswordFinder() {
+                            public char[] getPassword() {
+                                return p.getProperty("certificate.password", "secret").toCharArray();
+                            }
+                        });
                 key = ((KeyPair) keyReader.readObject()).getPrivate();
 
                 PEMReader reader = new PEMReader(new FileReader(Play.getFile(p.getProperty("certificate.file", "conf/host.cert"))));
 
-		X509Certificate cert;
-		Vector chainVector = new Vector();
+                X509Certificate cert;
+                Vector chainVector = new Vector();
 
-		while ((cert = (X509Certificate) reader.readObject()) != null) {
-		    chainVector.add(cert);
-		}
-		chain = (X509Certificate[])chainVector.toArray(new X509Certificate[1]);
+                while ((cert = (X509Certificate) reader.readObject()) != null) {
+                    chainVector.add(cert);
+                }
+                chain = (X509Certificate[]) chainVector.toArray(new X509Certificate[1]);
             } catch (Exception e) {
                 e.printStackTrace();
                 Logger.error(e, "");

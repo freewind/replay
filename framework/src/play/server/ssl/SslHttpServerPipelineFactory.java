@@ -1,17 +1,16 @@
 package play.server.ssl;
 
-import javax.net.ssl.SSLEngine;
-
 import org.jboss.netty.channel.ChannelPipeline;
 import org.jboss.netty.channel.ChannelPipelineFactory;
 import org.jboss.netty.handler.codec.http.HttpRequestDecoder;
 import org.jboss.netty.handler.codec.http.HttpResponseEncoder;
 import org.jboss.netty.handler.ssl.SslHandler;
 import org.jboss.netty.handler.stream.ChunkedWriteHandler;
-
 import play.Play;
 import play.server.FlashPolicyHandler;
 import play.server.StreamChunkAggregator;
+
+import javax.net.ssl.SSLEngine;
 
 import static org.jboss.netty.channel.Channels.pipeline;
 
@@ -33,13 +32,13 @@ public class SslHttpServerPipelineFactory implements ChannelPipelineFactory {
         if (enabledCiphers != null && enabledCiphers.length() > 0) {
             engine.setEnabledCipherSuites(enabledCiphers.replaceAll(" ", "").split(","));
         }
-        
+
         if ("want".equalsIgnoreCase(mode)) {
             engine.setWantClientAuth(true);
         } else if ("need".equalsIgnoreCase(mode)) {
             engine.setNeedClientAuth(true);
         }
-        
+
         engine.setEnableSessionCreation(true);
 
         pipeline.addLast("flashPolicy", new FlashPolicyHandler());

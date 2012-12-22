@@ -1,13 +1,12 @@
 package play.db.jpa;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.persistence.PersistenceUnit;
-
 import play.Play;
 import play.classloading.ApplicationClassloaderState;
 import play.db.DBConfig;
+
+import javax.persistence.PersistenceUnit;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Entity2JPAConfigResolver {
 
@@ -25,7 +24,7 @@ public class Entity2JPAConfigResolver {
         }
 
         String configName = class2ConfigNameMapping.get(clazz);
-        if (configName!=null) {
+        if (configName != null) {
             return configName;
         }
         configName = resolveJPAConfigNameForEntityClass(clazz);
@@ -36,16 +35,16 @@ public class Entity2JPAConfigResolver {
 
     private static String resolveJPAConfigNameForEntityClass(Class clazz) {
         @SuppressWarnings("unchecked")
-        PersistenceUnit persistenceUnitAnnotation = (PersistenceUnit)clazz.getAnnotation(PersistenceUnit.class);
-        if (persistenceUnitAnnotation!=null) {
+        PersistenceUnit persistenceUnitAnnotation = (PersistenceUnit) clazz.getAnnotation(PersistenceUnit.class);
+        if (persistenceUnitAnnotation != null) {
             return persistenceUnitAnnotation.name();
         } else {
 
             // look for @PersistenceUnit on package and sub packages
             Package pg = clazz.getPackage();
-            if (pg!= null) {
+            if (pg != null) {
                 persistenceUnitAnnotation = pg.getAnnotation(PersistenceUnit.class);
-                if (persistenceUnitAnnotation!=null) {
+                if (persistenceUnitAnnotation != null) {
                     return persistenceUnitAnnotation.name();
                 }
             }

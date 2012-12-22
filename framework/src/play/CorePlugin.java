@@ -5,11 +5,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.jamonapi.MonitorFactory;
 import com.jamonapi.utils.Misc;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
 import org.apache.commons.lang.StringUtils;
 import play.Play.Mode;
 import play.classloading.ApplicationClasses.ApplicationClass;
@@ -25,6 +20,11 @@ import play.libs.Crypto;
 import play.mvc.Http.Header;
 import play.mvc.Http.Request;
 import play.mvc.Http.Response;
+
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Plugin used for core tasks
@@ -67,7 +67,7 @@ public class CorePlugin extends PlayPlugin {
     }
 
     /**
-     * Intercept /@status and check that the Authorization header is valid. 
+     * Intercept /@status and check that the Authorization header is valid.
      * Then ask each plugin for a status dump and send it over the HTTP response.
      */
     @Override
@@ -81,7 +81,7 @@ public class CorePlugin extends PlayPlugin {
             }
         }
         if (request.path.equals("/@status") || request.path.equals("/@status.json")) {
-            if(!Play.started) {
+            if (!Play.started) {
                 response.print("Application is not started");
                 response.status = 503;
                 return true;
@@ -287,13 +287,13 @@ public class CorePlugin extends PlayPlugin {
     @Override
     public void enhance(ApplicationClass applicationClass) throws Exception {
         Class<?>[] enhancers = new Class[]{
-            SigEnhancer.class,
-            ControllersEnhancer.class,
-            
-            ContinuationEnhancer.class,
-            LVEnhancer.class,
-            MailerEnhancer.class,
-            PropertiesEnhancer.class
+                SigEnhancer.class,
+                ControllersEnhancer.class,
+
+                ContinuationEnhancer.class,
+                LVEnhancer.class,
+                MailerEnhancer.class,
+                PropertiesEnhancer.class
         };
         for (Class<?> enhancer : enhancers) {
             try {

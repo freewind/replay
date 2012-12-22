@@ -13,8 +13,11 @@ import java.lang.reflect.Type;
 public @interface As {
 
     String[] value() default {""};
+
     String[] lang() default {"*"};
+
     String[] format() default {"html"};
+
     Class<? extends TypeBinder<?>> binder() default DEFAULT.class;
 
     public static final class DEFAULT implements TypeBinder<Object> {
@@ -22,5 +25,5 @@ public @interface As {
             throw new UnsupportedOperationException("Not supported.");
         }
     }
-    
+
 }

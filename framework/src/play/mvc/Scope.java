@@ -1,15 +1,5 @@
 package play.mvc;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 import play.Logger;
 import play.Play;
 import play.data.binding.Binder;
@@ -23,6 +13,15 @@ import play.libs.Codec;
 import play.libs.Crypto;
 import play.libs.Time;
 import play.utils.Utils;
+
+import java.lang.annotation.Annotation;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * All application Scopes
@@ -67,7 +66,7 @@ public class Scope {
                 return;
             }
             if (out.isEmpty()) {
-                if(Http.Request.current().cookies.containsKey(COOKIE_PREFIX + "_FLASH") || !SESSION_SEND_ONLY_IF_CHANGED) {
+                if (Http.Request.current().cookies.containsKey(COOKIE_PREFIX + "_FLASH") || !SESSION_SEND_ONLY_IF_CHANGED) {
                     Http.Response.current().setCookie(COOKIE_PREFIX + "_FLASH", "", null, "/", 0, COOKIE_SECURE);
                 }
                 return;
@@ -87,6 +86,7 @@ public class Scope {
                 throw new UnexpectedException("Flash serializationProblem", e);
             }
         }        // ThreadLocal access
+
         public static ThreadLocal<Flash> current = new ThreadLocal<Flash>();
 
         public static Flash current() {
@@ -177,42 +177,42 @@ public class Scope {
             try {
                 Session session = new Session();
                 Http.Cookie cookie = Http.Request.current().cookies.get(COOKIE_PREFIX + "_SESSION");
-				final int duration = Time.parseDuration(COOKIE_EXPIRE) ;
-				final long expiration = (duration * 1000l);
+                final int duration = Time.parseDuration(COOKIE_EXPIRE);
+                final long expiration = (duration * 1000l);
 
                 if (cookie != null && Play.started && cookie.value != null && !cookie.value.trim().equals("")) {
                     String value = cookie.value;
-				 	int firstDashIndex = value.indexOf("-");
-				    if(firstDashIndex > -1) {
-                    	String sign = value.substring(0, firstDashIndex);
-                    	String data = value.substring(firstDashIndex + 1);
-                    	if (sign.equals(Crypto.sign(data, Play.secretKey.getBytes()))) {
-                        	String sessionData = URLDecoder.decode(data, "utf-8");
-                        	Matcher matcher = sessionParser.matcher(sessionData);
-                        	while (matcher.find()) {
-                            	session.put(matcher.group(1), matcher.group(2));
-                        	}
-                    	}
-					} 
+                    int firstDashIndex = value.indexOf("-");
+                    if (firstDashIndex > -1) {
+                        String sign = value.substring(0, firstDashIndex);
+                        String data = value.substring(firstDashIndex + 1);
+                        if (sign.equals(Crypto.sign(data, Play.secretKey.getBytes()))) {
+                            String sessionData = URLDecoder.decode(data, "utf-8");
+                            Matcher matcher = sessionParser.matcher(sessionData);
+                            while (matcher.find()) {
+                                session.put(matcher.group(1), matcher.group(2));
+                            }
+                        }
+                    }
                     if (COOKIE_EXPIRE != null) {
                         // Verify that the session contains a timestamp, and that it's not expired
-					    if (!session.contains(TS_KEY)) {
+                        if (!session.contains(TS_KEY)) {
                             session = new Session();
                         } else {
-					        if ((Long.parseLong(session.get(TS_KEY))) < System.currentTimeMillis()) {
+                            if ((Long.parseLong(session.get(TS_KEY))) < System.currentTimeMillis()) {
                                 // Session expired
                                 session = new Session();
                             }
                         }
-					    session.put(TS_KEY, System.currentTimeMillis() + expiration);
+                        session.put(TS_KEY, System.currentTimeMillis() + expiration);
                     } else {
                         // Just restored. Nothing changed. No cookie-expire.
                         session.changed = false;
                     }
                 } else {
                     // no previous cookie to restore; but we may have to set the timestamp in the new cookie
-			        if (COOKIE_EXPIRE != null) {	
-				        session.put(TS_KEY, (System.currentTimeMillis() + expiration));
+                    if (COOKIE_EXPIRE != null) {
+                        session.put(TS_KEY, (System.currentTimeMillis() + expiration));
                     }
                 }
 
@@ -221,6 +221,7 @@ public class Scope {
                 throw new UnexpectedException("Corrupted HTTP session from " + Http.Request.current().remoteAddress, e);
             }
         }
+
         Map<String, String> data = new HashMap<String, String>(); // ThreadLocal access
         boolean changed = false;
         public static ThreadLocal<Session> current = new ThreadLocal<Session>();
@@ -257,13 +258,13 @@ public class Scope {
                 // Some request like WebSocket don't have any response
                 return;
             }
-            if(!changed && SESSION_SEND_ONLY_IF_CHANGED && COOKIE_EXPIRE == null) {
+            if (!changed && SESSION_SEND_ONLY_IF_CHANGED && COOKIE_EXPIRE == null) {
                 // Nothing changed and no cookie-expire, consequently send nothing back.
                 return;
             }
             if (isEmpty()) {
                 // The session is empty: delete the cookie
-                if(Http.Request.current().cookies.containsKey(COOKIE_PREFIX + "_SESSION") || !SESSION_SEND_ONLY_IF_CHANGED) {
+                if (Http.Request.current().cookies.containsKey(COOKIE_PREFIX + "_SESSION") || !SESSION_SEND_ONLY_IF_CHANGED) {
                     Http.Response.current().setCookie(COOKIE_PREFIX + "_SESSION", "", null, "/", 0, COOKIE_SECURE, SESSION_HTTPONLY);
                 }
                 return;
@@ -363,6 +364,7 @@ public class Scope {
         public static Params current() {
             return current.get();
         }
+
         boolean requestIsParsed;
         public Map<String, String[]> data = new HashMap<String, String[]>();
 

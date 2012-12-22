@@ -30,12 +30,20 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
-import java.net.URLDecoder;
 import java.net.URISyntaxException;
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Servlet implementation.
@@ -151,9 +159,9 @@ public class ServletWrapper extends HttpServlet implements ServletContextListene
             }
             serveStatic(httpServletResponse, httpServletRequest, e);
             return;
-        } catch(URISyntaxException e) {
-			 serve404(httpServletRequest, httpServletResponse, new NotFound(e.toString()));
-	         return;
+        } catch (URISyntaxException e) {
+            serve404(httpServletRequest, httpServletResponse, new NotFound(e.toString()));
+            return;
         } catch (Throwable e) {
             throw new ServletException(e);
         } finally {
@@ -205,7 +213,7 @@ public class ServletWrapper extends HttpServlet implements ServletContextListene
     }
 
     public static boolean isModified(String etag, long last,
-            HttpServletRequest request) {
+                                     HttpServletRequest request) {
         // See section 14.26 in rfc 2616 http://www.faqs.org/rfcs/rfc2616.html
         String browserEtag = request.getHeader(IF_NONE_MATCH);
         String dateString = request.getHeader(IF_MODIFIED_SINCE);
@@ -238,8 +246,8 @@ public class ServletWrapper extends HttpServlet implements ServletContextListene
     }
 
     public static Request parseRequest(HttpServletRequest httpServletRequest) throws Exception {
-	 	
-		URI uri = new URI(httpServletRequest.getRequestURI());
+
+        URI uri = new URI(httpServletRequest.getRequestURI());
         String method = httpServletRequest.getMethod().intern();
         String path = uri.getPath();
         String querystring = httpServletRequest.getQueryString() == null ? "" : httpServletRequest.getQueryString();
@@ -442,9 +450,9 @@ public class ServletWrapper extends HttpServlet implements ServletContextListene
     public void copyResponse(Request request, Response response, HttpServletRequest servletRequest, HttpServletResponse servletResponse) throws IOException {
         String encoding = Response.current().encoding;
         if (response.contentType != null) {
-            servletResponse.setHeader("Content-Type", response.contentType + (response.contentType.startsWith("text/") ? "; charset="+encoding : ""));
+            servletResponse.setHeader("Content-Type", response.contentType + (response.contentType.startsWith("text/") ? "; charset=" + encoding : ""));
         } else {
-            servletResponse.setHeader("Content-Type", "text/plain;charset="+encoding);
+            servletResponse.setHeader("Content-Type", "text/plain;charset=" + encoding);
         }
 
         servletResponse.setStatus(response.status);

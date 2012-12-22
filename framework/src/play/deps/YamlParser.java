@@ -1,15 +1,5 @@
 package play.deps;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.text.ParseException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.apache.ivy.core.module.descriptor.Configuration;
 import org.apache.ivy.core.module.descriptor.DefaultDependencyDescriptor;
 import org.apache.ivy.core.module.descriptor.DefaultExcludeRule;
@@ -27,6 +17,17 @@ import org.apache.ivy.plugins.parser.ModuleDescriptorParser;
 import org.apache.ivy.plugins.parser.ParserSettings;
 import org.apache.ivy.plugins.repository.Resource;
 import org.yaml.snakeyaml.Yaml;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.text.ParseException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class YamlParser extends AbstractModuleDescriptorParser {
 
@@ -94,7 +95,7 @@ public class YamlParser extends AbstractModuleDescriptorParser {
             descriptor.setLastModified(rsrc.getLastModified());
 
             boolean transitiveDependencies = get(data, "transitiveDependencies", boolean.class, true);
-            
+
             if (data.containsKey("require")) {
                 if (data.get("require") instanceof List) {
 
@@ -116,13 +117,13 @@ public class YamlParser extends AbstractModuleDescriptorParser {
 
                         // Hack
                         depName = depName.replace("$version", System.getProperty("play.version"));
-                        if(depName.matches("play\\s+->\\s+play") || depName.equals("play")) {
+                        if (depName.matches("play\\s+->\\s+play") || depName.equals("play")) {
                             depName = "play -> play " + System.getProperty("play.version");
                         }
-                        if(depName.matches("play\\s+->\\s+crud") || depName.equals("crud")) {
+                        if (depName.matches("play\\s+->\\s+crud") || depName.equals("crud")) {
                             depName = "play -> crud " + System.getProperty("play.version");
                         }
-                        if(depName.matches("play\\s+->\\s+secure") || depName.equals("secure")) {
+                        if (depName.matches("play\\s+->\\s+secure") || depName.equals("secure")) {
                             depName = "play -> secure " + System.getProperty("play.version");
                         }
 
@@ -206,7 +207,7 @@ public class YamlParser extends AbstractModuleDescriptorParser {
     }
 
     public void toIvyFile(InputStream in, Resource rsrc, File file, ModuleDescriptor md) throws ParseException, IOException {
-        ((DefaultModuleDescriptor)md).toIvyFile(file);
+        ((DefaultModuleDescriptor) md).toIvyFile(file);
     }
 
     @SuppressWarnings("unchecked")
@@ -214,7 +215,7 @@ public class YamlParser extends AbstractModuleDescriptorParser {
         if (data.containsKey(key)) {
             Object o = data.get(key);
             if (type.isAssignableFrom(o.getClass())) {
-                if(o instanceof String) {
+                if (o instanceof String) {
                     o = o.toString().replace("${play.path}", System.getProperty("play.path"));
                     o = o.toString().replace("${application.path}", System.getProperty("application.path"));
                 }

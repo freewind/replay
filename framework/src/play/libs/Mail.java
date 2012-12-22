@@ -7,7 +7,14 @@ import play.Logger;
 import play.Play;
 import play.exceptions.MailException;
 
-import javax.mail.*;
+import javax.mail.Authenticator;
+import javax.mail.BodyPart;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.Multipart;
+import javax.mail.Part;
+import javax.mail.PasswordAuthentication;
+import javax.mail.Session;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.io.IOException;
@@ -15,7 +22,13 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Mail utils
@@ -78,9 +91,8 @@ public class Mail {
             throw new MailException("Please define a 'from' email address", new NullPointerException());
         }
         if ((email.getToAddresses() == null || email.getToAddresses().size() == 0) &&
-            (email.getCcAddresses() == null || email.getCcAddresses().size() == 0)  &&
-            (email.getBccAddresses() == null || email.getBccAddresses().size() == 0)) 
-        {
+                (email.getCcAddresses() == null || email.getCcAddresses().size() == 0) &&
+                (email.getBccAddresses() == null || email.getBccAddresses().size() == 0)) {
             throw new MailException("Please define a recipient email address", new NullPointerException());
         }
         if (email.getSubject() == null) {
@@ -260,9 +272,9 @@ public class Mail {
                         text += getContent(bodyPart);
                     } else {
                         text += "attachment: \n" +
-                       "\t\t name: " + (StringUtils.isEmpty(bodyPart.getFileName()) ? "none" : bodyPart.getFileName()) + "\n" +
-                       "\t\t disposition: " + bodyPart.getDisposition() + "\n" +
-                       "\t\t description: " +  (StringUtils.isEmpty(bodyPart.getDescription()) ? "none" : bodyPart.getDescription())  + "\n\t";
+                                "\t\t name: " + (StringUtils.isEmpty(bodyPart.getFileName()) ? "none" : bodyPart.getFileName()) + "\n" +
+                                "\t\t disposition: " + bodyPart.getDisposition() + "\n" +
+                                "\t\t description: " + (StringUtils.isEmpty(bodyPart.getDescription()) ? "none" : bodyPart.getDescription()) + "\n\t";
                     }
                 }
                 return text;
@@ -272,9 +284,9 @@ public class Mail {
                     return getContent((Part) message.getContent());
                 } else {
                     return "attachment: \n" +
-                           "\t\t name: " + (StringUtils.isEmpty(message.getFileName()) ? "none" : message.getFileName()) + "\n" +
-                           "\t\t disposition: " + message.getDisposition() + "\n" +
-                           "\t\t description: " + (StringUtils.isEmpty(message.getDescription()) ? "none" : message.getDescription()) + "\n\t";
+                            "\t\t name: " + (StringUtils.isEmpty(message.getFileName()) ? "none" : message.getFileName()) + "\n" +
+                            "\t\t disposition: " + message.getDisposition() + "\n" +
+                            "\t\t description: " + (StringUtils.isEmpty(message.getDescription()) ? "none" : message.getDescription()) + "\n\t";
                 }
             }
 
@@ -318,7 +330,7 @@ public class Mail {
                     // remove the last ,
                     content.delete(content.length() - 2, content.length());
                 }
-                 if (email.getBccAddresses() != null && !email.getBccAddresses().isEmpty()) {
+                if (email.getBccAddresses() != null && !email.getBccAddresses().isEmpty()) {
                     content.append("\n\tBcc: ");
                     for (Object add : email.getBccAddresses()) {
                         content.append(add.toString() + ", ");
@@ -346,9 +358,9 @@ public class Mail {
         public static String getLastMessageReceivedBy(String email) {
             return emails.get(email);
         }
-        
-        public static void reset(){
-        	emails.clear();
+
+        public static void reset() {
+            emails.clear();
         }
     }
 }

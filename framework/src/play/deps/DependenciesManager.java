@@ -1,12 +1,5 @@
 package play.deps;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.FileFilter;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.ivy.Ivy;
 import org.apache.ivy.core.report.ArtifactDownloadReport;
@@ -19,9 +12,15 @@ import org.apache.ivy.plugins.parser.ModuleDescriptorParserRegistry;
 import org.apache.ivy.util.DefaultMessageLogger;
 import org.apache.ivy.util.Message;
 import org.apache.ivy.util.filter.FilterHelper;
-
 import play.libs.Files;
 import play.libs.IO;
+
+import java.io.File;
+import java.io.FileFilter;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 public class DependenciesManager {
 
@@ -30,12 +29,12 @@ public class DependenciesManager {
         // Paths
         File application = new File(System.getProperty("application.path"));
         File framework = new File(System.getProperty("framework.path"));
-        File userHome  = new File(System.getProperty("user.home"));
+        File userHome = new File(System.getProperty("user.home"));
 
         DependenciesManager deps = new DependenciesManager(application, framework, userHome);
 
         ResolveReport report = deps.resolve();
-            if(report != null) {
+        if (report != null) {
             deps.report();
             List<File> installed = deps.retrieve(report);
             deps.sync(installed);
@@ -56,17 +55,17 @@ public class DependenciesManager {
     File framework;
     File userHome;
     HumanReadyLogger logger;
-    
+
     final FileFilter dirsToTrim = new FileFilter() {
-    
+
         public boolean accept(File file) {
             return file.isDirectory() && isDirToTrim(file.getName());
         }
-        
+
         private boolean isDirToTrim(String fileName) {
-            return "documentation".equals(fileName) || "src".equals(fileName) || 
-                   "tmp".equals(fileName) || fileName.contains("sample") ||
-                   fileName.contains("test");
+            return "documentation".equals(fileName) || "src".equals(fileName) ||
+                    "tmp".equals(fileName) || fileName.contains("sample") ||
+                    fileName.contains("test");
         }
     };
 
@@ -103,8 +102,8 @@ public class DependenciesManager {
         List<File> notSync = new ArrayList<File>();
 
         File[] paths = new File[]{
-            new File(application, "lib"),
-            new File(application, "modules")
+                new File(application, "lib"),
+                new File(application, "modules")
         };
         for (File path : paths) {
             if (path.exists()) {
@@ -162,7 +161,7 @@ public class DependenciesManager {
         List<ArtifactDownloadReport> missing = new ArrayList<ArtifactDownloadReport>();
 
         List<ArtifactDownloadReport> artifacts = new ArrayList<ArtifactDownloadReport>();
-        for (Iterator iter = report.getDependencies().iterator(); iter.hasNext();) {
+        for (Iterator iter = report.getDependencies().iterator(); iter.hasNext(); ) {
             IvyNode node = (IvyNode) iter.next();
             if (node.isLoaded() && !node.isCompletelyEvicted()) {
                 ArtifactDownloadReport[] adr = report.getArtifactsReports(node.getResolvedId());
@@ -255,13 +254,13 @@ public class DependenciesManager {
                     Files.unzip(from, to);
                     System.out.println("~ \tmodules/" + to.getName());
                 }
-                
+
                 if (trim) {
                     for (File dirToTrim : to.listFiles(dirsToTrim)) {
                         Files.deleteDirectory(dirToTrim);
                     }
                 }
-                
+
                 return to;
             }
         } catch (Exception e) {
@@ -296,40 +295,40 @@ public class DependenciesManager {
         // Module
         ModuleDescriptorParserRegistry.getInstance().addParser(new YamlParser());
         File ivyModule = new File(application, "conf/dependencies.yml");
-        if(!ivyModule.exists()) {
+        if (!ivyModule.exists()) {
             System.out.println("~ !! " + ivyModule.getAbsolutePath() + " does not exist");
-			System.exit(-1);
+            System.exit(-1);
             return null;
         }
 
 
         // Variables
         System.setProperty("play.path", framework.getAbsolutePath());
-        
+
         // Ivy
         Ivy ivy = configure();
 
         // Clear the cache
         boolean clearcache = System.getProperty("clearcache") != null;
-        if(clearcache){
-           System.out.println("~ Clearing cache : " + ivy.getResolutionCacheManager().getResolutionCacheRoot() + ",");
-           System.out.println("~");
-           try{
-      		   FileUtils.deleteDirectory(ivy.getResolutionCacheManager().getResolutionCacheRoot());
-      		   System.out.println("~       Clear");
-           }catch(IOException e){
-        	   System.out.println("~       Could not clear");
-        	   System.out.println("~ ");
-        	   e.printStackTrace();
-             }
+        if (clearcache) {
+            System.out.println("~ Clearing cache : " + ivy.getResolutionCacheManager().getResolutionCacheRoot() + ",");
+            System.out.println("~");
+            try {
+                FileUtils.deleteDirectory(ivy.getResolutionCacheManager().getResolutionCacheRoot());
+                System.out.println("~       Clear");
+            } catch (IOException e) {
+                System.out.println("~       Could not clear");
+                System.out.println("~ ");
+                e.printStackTrace();
+            }
 
-           System.out.println("~");
-         }
-        
+            System.out.println("~");
+        }
+
 
         System.out.println("~ Resolving dependencies using " + ivyModule.getAbsolutePath() + ",");
         System.out.println("~");
-        
+
         // Resolve
         ResolveEngine resolveEngine = ivy.getResolveEngine();
         ResolveOptions resolveOptions = new ResolveOptions();
@@ -359,7 +358,7 @@ public class DependenciesManager {
 
         // Default ivy config see: http://play.lighthouseapp.com/projects/57987-play-framework/tickets/807
         File ivyDefaultSettings = new File(userHome, ".ivy2/ivysettings.xml");
-        if(ivyDefaultSettings.exists()) {
+        if (ivyDefaultSettings.exists()) {
             ivy.configure(ivyDefaultSettings);
         }
 

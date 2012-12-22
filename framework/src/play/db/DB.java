@@ -12,29 +12,22 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.sql.SQLException;
-import javax.sql.DataSource;
-
-import org.hibernate.internal.SessionImpl;
-import play.db.jpa.JPA;
-import play.exceptions.DatabaseException;
-import play.Logger;
 
 /**
  * Database connection utilities.
- *
+ * <p/>
  * This class holds reference to all DB configurations.
  * Each configuration has its own instance of DBConfig.
- *
+ * <p/>
  * dbConfigName corresponds to properties-names in application.conf.
- *
+ * <p/>
  * The default DBConfig is the one configured using 'db.' in application.conf
- *
+ * <p/>
  * dbConfigName = 'other' is configured like this:
- *
+ * <p/>
  * db_other = mem
  * db_other.user = batman
- *
+ * <p/>
  * This class also preserves backward compatibility by
  * directing static methods to the default DBConfig-instance
  */
@@ -47,17 +40,18 @@ public class DB {
     /**
      * Sets the new list of db configurations.
      * Tries to preserve existing config if not changed
+     *
      * @param dbConfigNames
      */
     protected static void setConfigurations(List<String> dbConfigNames) {
 
         // remember old configs to detect what has been removed
         List<String> oldNames = new ArrayList<String>();
-        oldNames.addAll( dbConfigs.keySet());
+        oldNames.addAll(dbConfigs.keySet());
 
         for (String dbConfigName : dbConfigNames) {
             DBConfig dbConfig = dbConfigs.get(dbConfigName);
-            if (dbConfig!=null) {
+            if (dbConfig != null) {
                 // Config with this name already exists
                 dbConfig.configure();
                 oldNames.remove(dbConfigName);
@@ -97,14 +91,14 @@ public class DB {
 
     /**
      * dbConfigName corresponds to properties-names in application.conf.
-     *
+     * <p/>
      * The default dbConfig is named 'play', and is the one configured using 'db.' in application.conf
-     *
+     * <p/>
      * dbConfigName = 'other' is configured like this:
-     *
+     * <p/>
      * db_other = mem
      * db_other.user = batman
-     *
+     * <p/>
      * An exception is thrown if the config is not found
      *
      * @param dbConfigName name of the config
@@ -116,23 +110,23 @@ public class DB {
 
     /**
      * dbConfigName corresponds to properties-names in application.conf.
-     *
+     * <p/>
      * The default dbConfig is named 'play', and is the one configured using 'db.' in application.conf
-     *
+     * <p/>
      * dbConfigName = 'other' is configured like this:
-     *
+     * <p/>
      * db_other = mem
      * db_other.user = batman
-     *
+     * <p/>
      * An exception is thrown if the config is not found, unless ignoreError == true
      *
      * @param dbConfigName name of the config
-     * @param ignoreError set to true if null should be returned if config is missing
+     * @param ignoreError  set to true if null should be returned if config is missing
      * @return a DBConfig specified by name
      */
     public static DBConfig getDBConfig(String dbConfigName, boolean ignoreError) {
         DBConfig dbConfig = dbConfigs.get(dbConfigName);
-        if (dbConfig==null && ignoreError == false) {
+        if (dbConfig == null && ignoreError == false) {
             throw new RuntimeException("No DBConfig found with the name " + dbConfigName);
         }
         return dbConfig;
@@ -159,6 +153,7 @@ public class DB {
 
     /**
      * Open a connection for the current thread.
+     *
      * @return A valid SQL connection
      */
     public static Connection getConnection() {
@@ -167,6 +162,7 @@ public class DB {
 
     /**
      * Execute an SQL update
+     *
      * @param SQL
      * @return false if update failed
      */
@@ -176,6 +172,7 @@ public class DB {
 
     /**
      * Execute an SQL query
+     *
      * @param SQL
      * @return The query resultSet
      */

@@ -1,21 +1,20 @@
 package play.data.validation;
 
-import java.lang.reflect.Field;
-import java.util.Map;
-import java.util.TreeMap;
 import net.sf.oval.Validator;
 import net.sf.oval.configuration.annotation.AbstractAnnotationCheck;
 import net.sf.oval.context.FieldContext;
 import net.sf.oval.context.OValContext;
-import org.apache.commons.lang.StringUtils;
 import play.db.jpa.GenericModel;
 import play.db.jpa.JPQL;
 import play.db.jpa.Model;
 import play.exceptions.UnexpectedException;
 
+import java.lang.reflect.Field;
+import java.util.Map;
+import java.util.TreeMap;
+
 /**
  * Check which proof if one or a set of properties is unique.
- *
  */
 public class UniqueCheck extends AbstractAnnotationCheck<Unique> {
 
@@ -46,11 +45,10 @@ public class UniqueCheck extends AbstractAnnotationCheck<Unique> {
     }
 
     /**
-     *
      * {@inheritDoc}
      */
     public boolean isSatisfied(Object validatedObject, Object value,
-            OValContext context, Validator validator) {
+                               OValContext context, Validator validator) {
         requireMessageVariablesRecreation();
         if (value == null) {
             return true;
@@ -58,7 +56,7 @@ public class UniqueCheck extends AbstractAnnotationCheck<Unique> {
         final String[] propertyNames = getPropertyNames(
                 ((FieldContext) context).getField().getName());
         final GenericModel model = (GenericModel) validatedObject;
-        final Model.Factory factory =  Model.Manager.factoryFor(model.getClass());
+        final Model.Factory factory = Model.Manager.factoryFor(model.getClass());
         final String keyProperty = factory.keyName();
         final Object keyValue = factory.keyValue(model);
         //In case of an update make sure that we won't read the current record from database.
@@ -69,7 +67,7 @@ public class UniqueCheck extends AbstractAnnotationCheck<Unique> {
         final Object[] values = new Object[isUpdate ? propertyNames.length + 1 :
                 propertyNames.length];
         final Class clazz = validatedObject.getClass();
-		int index = 1;
+        int index = 1;
         for (int i = 0; i < propertyNames.length; i++) {
             Field field = getField(clazz, propertyNames[i]);
             field.setAccessible(true);
@@ -104,7 +102,7 @@ public class UniqueCheck extends AbstractAnnotationCheck<Unique> {
             throw new UnexpectedException("Error while determining the field " +
                     fieldName + " for an object of type " + clazz);
         }
-        throw new UnexpectedException("Cannot get the field " +  fieldName +
+        throw new UnexpectedException("Cannot get the field " + fieldName +
                 " for an object of type " + clazz);
     }
 }

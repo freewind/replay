@@ -82,6 +82,7 @@ public class DBConfig {
 
     /**
      * Open a connection for the current thread.
+     *
      * @return A valid SQL connection
      */
     @SuppressWarnings("deprecation")
@@ -89,9 +90,9 @@ public class DBConfig {
         try {
             // do we have a present JPAContext for this db-config in current thread?
             JPAConfig jpaConfig = JPA.getJPAConfig(dbConfigName, true);
-            if (jpaConfig!=null) {
+            if (jpaConfig != null) {
                 JPAContext jpaContext = jpaConfig.getJPAContext();
-                return ((SessionImpl)((org.hibernate.ejb.EntityManagerImpl) jpaContext.em()).getSession()).connection();
+                return ((SessionImpl) ((org.hibernate.ejb.EntityManagerImpl) jpaContext.em()).getSession()).connection();
             }
 
             // do we have a current raw connection bound to thread?
@@ -115,6 +116,7 @@ public class DBConfig {
 
     /**
      * Execute an SQL update
+     *
      * @param SQL
      * @return false if update failed
      */
@@ -128,6 +130,7 @@ public class DBConfig {
 
     /**
      * Execute an SQL query
+     *
      * @param SQL
      * @return The query resultSet
      */
@@ -145,9 +148,9 @@ public class DBConfig {
     public void destroy() {
         try {
             if (datasource != null && destroyMethod != null && !destroyMethod.equals("")) {
-                Method close = datasource.getClass().getMethod(destroyMethod, new Class[] {});
+                Method close = datasource.getClass().getMethod(destroyMethod, new Class[]{});
                 if (close != null) {
-                    close.invoke(datasource, new Object[] {});
+                    close.invoke(datasource, new Object[]{});
                     datasource = null;
                     if (Logger.isTraceEnabled()) {
                         Logger.trace("Datasource destroyed for db config " + dbConfigName);
@@ -155,7 +158,7 @@ public class DBConfig {
                 }
             }
         } catch (Throwable t) {
-             Logger.error("Couldn't destroy the datasource for db config " + dbConfigName, t);
+            Logger.error("Couldn't destroy the datasource for db config " + dbConfigName, t);
         }
     }
 
@@ -177,7 +180,7 @@ public class DBConfig {
         if (defaultDbConfigName.equals(dbConfigName)) {
             propsPrefix = "db";
         } else {
-            propsPrefix = "db_"+dbConfigName;
+            propsPrefix = "db_" + dbConfigName;
         }
 
         boolean dbConfigured = false;
@@ -196,22 +199,22 @@ public class DBConfig {
 
                 boolean isJndiDatasource = false;
                 String datasourceName = p.getProperty(propsPrefix, "");
-                
+
                 // Identify datasource JNDI lookup name by 'jndi:' or 'java:' prefix 
                 if (datasourceName.startsWith("jndi:")) {
                     datasourceName = datasourceName.substring("jndi:".length());
                     isJndiDatasource = true;
                 }
-                
+
                 if (isJndiDatasource || datasourceName.startsWith("java:")) {
-                    
+
                     Context ctx = new InitialContext();
                     datasource = (DataSource) ctx.lookup(datasourceName);
 
                 } else {
 
                     // Try the driver
-                    String driver = p.getProperty(propsPrefix+".driver");
+                    String driver = p.getProperty(propsPrefix + ".driver");
                     try {
                         Driver d = (Driver) Class.forName(driver, true, Play.classloader).newInstance();
                         DriverManager.registerDriver(new ProxyDriver(d));
@@ -222,10 +225,10 @@ public class DBConfig {
                     // Try the connection
                     Connection fake = null;
                     try {
-                        if (p.getProperty(propsPrefix+".user") == null) {
-                            fake = DriverManager.getConnection(p.getProperty(propsPrefix+".url"));
+                        if (p.getProperty(propsPrefix + ".user") == null) {
+                            fake = DriverManager.getConnection(p.getProperty(propsPrefix + ".url"));
                         } else {
-                            fake = DriverManager.getConnection(p.getProperty(propsPrefix+".url"), p.getProperty(propsPrefix+".user"), p.getProperty(propsPrefix+".pass"));
+                            fake = DriverManager.getConnection(p.getProperty(propsPrefix + ".url"), p.getProperty(propsPrefix + ".user"), p.getProperty(propsPrefix + ".pass"));
                         }
                     } finally {
                         if (fake != null) {
@@ -234,7 +237,7 @@ public class DBConfig {
                     }
 
                     ComboPooledDataSource ds = new ComboPooledDataSource();
-                    ds.setDriverClass(p.getProperty(propsPrefix+".driver"));
+                    ds.setDriverClass(p.getProperty(propsPrefix + ".driver"));
                     ds.setJdbcUrl(p.getProperty(propsPrefix + ".url"));
                     ds.setUser(p.getProperty(propsPrefix + ".user"));
                     ds.setPassword(p.getProperty(propsPrefix + ".pass"));
@@ -249,7 +252,7 @@ public class DBConfig {
 
                     // This check is not required, but here to make it clear that nothing changes for people
                     // that don't set this configuration property. It may be safely removed.
-                    if(p.getProperty("db.isolation") != null) {
+                    if (p.getProperty("db.isolation") != null) {
                         ds.setConnectionCustomizerClassName(DBConfig.PlayConnectionCustomizer.class.getName());
                     }
 
@@ -267,15 +270,15 @@ public class DBConfig {
 
                 }
 
-                destroyMethod = p.getProperty(propsPrefix+".destroyMethod", "");
+                destroyMethod = p.getProperty(propsPrefix + ".destroyMethod", "");
 
             } catch (Exception e) {
                 datasource = null;
-                Logger.error(e, "Cannot connected to the database"+getConfigInfoString()+" : %s", e.getMessage());
+                Logger.error(e, "Cannot connected to the database" + getConfigInfoString() + " : %s", e.getMessage());
                 if (e.getCause() instanceof InterruptedException) {
-                    throw new DatabaseException("Cannot connected to the database"+getConfigInfoString()+". Check the configuration.", e);
+                    throw new DatabaseException("Cannot connected to the database" + getConfigInfoString() + ". Check the configuration.", e);
                 }
-                throw new DatabaseException("Cannot connected to the database"+getConfigInfoString()+", " + e.getMessage(), e);
+                throw new DatabaseException("Cannot connected to the database" + getConfigInfoString() + ", " + e.getMessage(), e);
             }
         }
 
@@ -291,7 +294,7 @@ public class DBConfig {
         if (defaultDbConfigName.equals(dbConfigName)) {
             return "";
         } else {
-            return " (db config name: "+dbConfigName+")";
+            return " (db config name: " + dbConfigName + ")";
         }
     }
 
@@ -300,13 +303,13 @@ public class DBConfig {
         StringWriter sw = new StringWriter();
         PrintWriter out = new PrintWriter(sw);
         if (datasource == null || !(datasource instanceof ComboPooledDataSource)) {
-            out.println("Datasource"+getConfigInfoString()+":");
+            out.println("Datasource" + getConfigInfoString() + ":");
             out.println("~~~~~~~~~~~");
             out.println("(not yet connected)");
             return sw.toString();
         }
         ComboPooledDataSource ds = (ComboPooledDataSource) datasource;
-        out.println("Datasource"+getConfigInfoString()+":");
+        out.println("Datasource" + getConfigInfoString() + ":");
         out.println("~~~~~~~~~~~");
         out.println("Jdbc url: " + ds.getJdbcUrl());
         out.println("Jdbc driver: " + ds.getDriverClass());
@@ -327,27 +330,27 @@ public class DBConfig {
     private boolean changed(String propsPrefix) {
         Properties p = Play.configuration;
 
-        if ("mem".equals(p.getProperty(propsPrefix)) && p.getProperty(propsPrefix+".url") == null) {
-            p.put(propsPrefix+".driver", "org.h2.Driver");
-            p.put(propsPrefix+".url", "jdbc:h2:mem:"+dbConfigName+";MODE=MYSQL;DB_CLOSE_ON_EXIT=FALSE");
-            p.put(propsPrefix+".user", "sa");
-            p.put(propsPrefix+".pass", "");
+        if ("mem".equals(p.getProperty(propsPrefix)) && p.getProperty(propsPrefix + ".url") == null) {
+            p.put(propsPrefix + ".driver", "org.h2.Driver");
+            p.put(propsPrefix + ".url", "jdbc:h2:mem:" + dbConfigName + ";MODE=MYSQL;DB_CLOSE_ON_EXIT=FALSE");
+            p.put(propsPrefix + ".user", "sa");
+            p.put(propsPrefix + ".pass", "");
         }
 
-        if ("fs".equals(p.getProperty(propsPrefix)) && p.getProperty(propsPrefix+".url") == null) {
-            p.put(propsPrefix+".driver", "org.h2.Driver");
-            p.put(propsPrefix+".url", "jdbc:h2:" + (new File(Play.applicationPath, "db/h2/"+dbConfigName).getAbsolutePath()) + ";MODE=MYSQL;DB_CLOSE_ON_EXIT=FALSE");
-            p.put(propsPrefix+".user", "sa");
-            p.put(propsPrefix+".pass", "");
+        if ("fs".equals(p.getProperty(propsPrefix)) && p.getProperty(propsPrefix + ".url") == null) {
+            p.put(propsPrefix + ".driver", "org.h2.Driver");
+            p.put(propsPrefix + ".url", "jdbc:h2:" + (new File(Play.applicationPath, "db/h2/" + dbConfigName).getAbsolutePath()) + ";MODE=MYSQL;DB_CLOSE_ON_EXIT=FALSE");
+            p.put(propsPrefix + ".user", "sa");
+            p.put(propsPrefix + ".pass", "");
         }
 
-        if (p.getProperty(propsPrefix, "").startsWith("java:") && p.getProperty(propsPrefix+".url") == null) {
+        if (p.getProperty(propsPrefix, "").startsWith("java:") && p.getProperty(propsPrefix + ".url") == null) {
             if (datasource == null) {
                 return true;
             }
         } else {
             // Internal pool is c3p0, we should call the close() method to destroy it.
-            check(p, "internal pool", propsPrefix+".destroyMethod");
+            check(p, "internal pool", propsPrefix + ".destroyMethod");
 
             p.put(propsPrefix + ".destroyMethod", "close");
         }
@@ -357,44 +360,44 @@ public class DBConfig {
             String user = m.group("user");
             String password = m.group("pwd");
             String name = m.group("name");
-            p.put(propsPrefix+".driver", "com.mysql.jdbc.Driver");
-            p.put(propsPrefix+".url", "jdbc:mysql://localhost/" + name + "?useUnicode=yes&characterEncoding=UTF-8&connectionCollation=utf8_general_ci");
+            p.put(propsPrefix + ".driver", "com.mysql.jdbc.Driver");
+            p.put(propsPrefix + ".url", "jdbc:mysql://localhost/" + name + "?useUnicode=yes&characterEncoding=UTF-8&connectionCollation=utf8_general_ci");
             if (user != null) {
-                p.put(propsPrefix+".user", user);
+                p.put(propsPrefix + ".user", user);
             }
             if (password != null) {
-                p.put(propsPrefix+".pass", password);
+                p.put(propsPrefix + ".pass", password);
             }
         }
 
-        if(p.getProperty(propsPrefix+".url") != null && p.getProperty(propsPrefix+".url").startsWith("jdbc:h2:mem:")) {
-            p.put(propsPrefix+".driver", "org.h2.Driver");
-            p.put(propsPrefix+".user", "sa");
-            p.put(propsPrefix+".pass", "");
+        if (p.getProperty(propsPrefix + ".url") != null && p.getProperty(propsPrefix + ".url").startsWith("jdbc:h2:mem:")) {
+            p.put(propsPrefix + ".driver", "org.h2.Driver");
+            p.put(propsPrefix + ".user", "sa");
+            p.put(propsPrefix + ".pass", "");
         }
 
-        if ((p.getProperty(propsPrefix+".driver") == null) || (p.getProperty(propsPrefix+".url") == null)) {
+        if ((p.getProperty(propsPrefix + ".driver") == null) || (p.getProperty(propsPrefix + ".url") == null)) {
             return false;
         }
         if (datasource == null) {
             return true;
         } else {
             ComboPooledDataSource ds = (ComboPooledDataSource) datasource;
-            if (!p.getProperty(propsPrefix+".driver").equals(ds.getDriverClass())) {
+            if (!p.getProperty(propsPrefix + ".driver").equals(ds.getDriverClass())) {
                 return true;
             }
-            if (!p.getProperty(propsPrefix+".url").equals(ds.getJdbcUrl())) {
+            if (!p.getProperty(propsPrefix + ".url").equals(ds.getJdbcUrl())) {
                 return true;
             }
-            if (!p.getProperty(propsPrefix+".user", "").equals(ds.getUser())) {
+            if (!p.getProperty(propsPrefix + ".user", "").equals(ds.getUser())) {
                 return true;
             }
-            if (!p.getProperty(propsPrefix+".pass", "").equals(ds.getPassword())) {
+            if (!p.getProperty(propsPrefix + ".pass", "").equals(ds.getPassword())) {
                 return true;
             }
         }
 
-        if (!p.getProperty(propsPrefix+".destroyMethod", "").equals(destroyMethod)) {
+        if (!p.getProperty(propsPrefix + ".destroyMethod", "").equals(destroyMethod)) {
             return true;
         }
 
@@ -478,9 +481,14 @@ public class DBConfig {
             }
         }
 
-        public void onDestroy(Connection c, String parentDataSourceIdentityToken) {}
-        public void onCheckOut(Connection c, String parentDataSourceIdentityToken) {}
-        public void onCheckIn(Connection c, String parentDataSourceIdentityToken) {}
+        public void onDestroy(Connection c, String parentDataSourceIdentityToken) {
+        }
+
+        public void onCheckOut(Connection c, String parentDataSourceIdentityToken) {
+        }
+
+        public void onCheckIn(Connection c, String parentDataSourceIdentityToken) {
+        }
 
         /**
          * Get the isolation level from either the isolationLevels map, or by

@@ -1,14 +1,15 @@
 package play.data;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import org.apache.commons.fileupload.FileItem;
 import play.data.parsing.TempFilePlugin;
 import play.exceptions.UnexpectedException;
 import play.libs.Files;
 import play.libs.IO;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 public class FileUpload implements Upload {
 
@@ -33,7 +34,7 @@ public class FileUpload implements Upload {
     public File asFile() {
         return defaultFile;
     }
-    
+
     public File asFile(File file) {
         try {
             Files.copy(defaultFile, file);
@@ -42,7 +43,7 @@ public class FileUpload implements Upload {
             throw new UnexpectedException(ex);
         }
     }
-    
+
     public File asFile(String name) {
         return asFile(new File(name));
     }
@@ -58,7 +59,7 @@ public class FileUpload implements Upload {
             throw new UnexpectedException(ex);
         }
     }
-    
+
     public String getContentType() {
         return fileItem.getContentType();
     }
@@ -74,7 +75,7 @@ public class FileUpload implements Upload {
     public Long getSize() {
         return defaultFile.length();
     }
-    
+
     public boolean isInMemory() {
         return fileItem.isInMemory();
     }

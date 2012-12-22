@@ -8,7 +8,7 @@ public class SafeCSVFormatter implements SafeFormatter {
 
     public String format(Template template, Object value) {
         if (value != null) {
-            return StringEscapeUtils.escapeCsv(value.toString());   
+            return StringEscapeUtils.escapeCsv(value.toString());
         }
         return "";
     }

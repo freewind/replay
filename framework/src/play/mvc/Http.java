@@ -1,6 +1,18 @@
 package play.mvc;
 
 import com.google.gson.Gson;
+import play.Logger;
+import play.Play;
+import play.exceptions.UnexpectedException;
+import play.libs.Codec;
+import play.libs.F;
+import play.libs.F.EventStream;
+import play.libs.F.Option;
+import play.libs.F.Promise;
+import play.libs.Time;
+import play.utils.HTTP;
+import play.utils.Utils;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,17 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import play.Logger;
-import play.Play;
-import play.exceptions.UnexpectedException;
-import play.libs.Codec;
-import play.libs.F;
-import play.libs.F.Option;
-import play.libs.F.Promise;
-import play.libs.F.EventStream;
-import play.libs.Time;
-import play.utils.HTTP;
-import play.utils.Utils;
 
 /**
  * HTTP interface
@@ -101,6 +102,7 @@ public class Http {
 
         /**
          * First value
+         *
          * @return The first value
          */
         public String value() {
@@ -123,7 +125,7 @@ public class Http {
          * this value is used. Can be configured using
          * the property 'application.defaultCookieDomain'
          * in application.conf.
-         *
+         * <p/>
          * This feature can be used to allow sharing
          * session/cookies between multiple sub domains.
          */
@@ -294,7 +296,7 @@ public class Http {
         /**
          * Deprecate the default constructor to encourage the use of createRequest() when creating new
          * requests.
-         *
+         * <p/>
          * Cannot hide it with protected because we have to be backward compatible with modules - ie PlayGrizzlyAdapter.java
          */
         @Deprecated
@@ -306,6 +308,7 @@ public class Http {
         /**
          * All creation / initing of new requests should use this method.
          * The purpose of this is to "show" what is needed when creating new Requests.
+         *
          * @return the newly created Request object
          */
         public static Request createRequest(
@@ -332,14 +335,14 @@ public class Http {
             newRequest.querystring = _querystring;
 
             // must try to extract encoding-info from contentType
-            if( _contentType == null ) {
+            if (_contentType == null) {
                 newRequest.contentType = "text/html".intern();
             } else {
 
-                HTTP.ContentTypeWithEncoding contentTypeEncoding = HTTP.parseContentType( _contentType );
+                HTTP.ContentTypeWithEncoding contentTypeEncoding = HTTP.parseContentType(_contentType);
                 newRequest.contentType = contentTypeEncoding.contentType;
                 // check for encoding-info
-                if( contentTypeEncoding.encoding != null ) {
+                if (contentTypeEncoding.encoding != null) {
                     // encoding-info was found in request
                     newRequest.encoding = contentTypeEncoding.encoding;
                 }
@@ -353,12 +356,12 @@ public class Http {
             newRequest.domain = _domain;
             newRequest.secure = _secure;
 
-            if(_headers == null) {
+            if (_headers == null) {
                 _headers = new HashMap<String, Http.Header>(16);
             }
             newRequest.headers = _headers;
 
-            if(_cookies == null) {
+            if (_cookies == null) {
                 _cookies = new HashMap<String, Http.Cookie>(16);
             }
             newRequest.cookies = _cookies;
@@ -466,6 +469,7 @@ public class Http {
 
         /**
          * Retrieve the current request
+         *
          * @return the current request
          */
         public static Request current() {
@@ -474,6 +478,7 @@ public class Http {
 
         /**
          * Useful because we sometime use a lazy request loader
+         *
          * @return itself
          */
         public Request get() {
@@ -493,6 +498,7 @@ public class Http {
 
         /**
          * Get the request base (ex: http://localhost:9000
+         *
          * @return the request base of the url (protocol, host and port)
          */
         public String getBase() {
@@ -606,6 +612,7 @@ public class Http {
 
         /**
          * Retrieve the current response
+         *
          * @return the current response
          */
         public static Response current() {
@@ -614,6 +621,7 @@ public class Http {
 
         /**
          * Get a response header
+         *
          * @param name Header name case-insensitive
          * @return the header value as a String
          */
@@ -630,7 +638,8 @@ public class Http {
 
         /**
          * Set a response header
-         * @param name Header name
+         *
+         * @param name  Header name
          * @param value Header value
          */
         public void setHeader(String name, String value) {
@@ -649,7 +658,8 @@ public class Http {
 
         /**
          * Set a new cookie
-         * @param name Cookie name
+         *
+         * @param name  Cookie name
          * @param value Cookie value
          */
         public void setCookie(String name, String value) {
@@ -658,6 +668,7 @@ public class Http {
 
         /**
          * Removes the specified cookie with path /
+         *
          * @param name cookiename
          */
         public void removeCookie(String name) {
@@ -666,6 +677,7 @@ public class Http {
 
         /**
          * Removes the cookie
+         *
          * @param name cookiename
          * @param path cookiepath
          */
@@ -675,6 +687,7 @@ public class Http {
 
         /**
          * Set a new cookie that will expire in (current) + duration
+         *
          * @param name
          * @param value
          * @param duration Ex: 3d
@@ -716,6 +729,7 @@ public class Http {
 
         /**
          * Add a cache-control header
+         *
          * @param duration Ex: 3h
          */
         public void cacheFor(String duration) {
@@ -725,6 +739,7 @@ public class Http {
 
         /**
          * Add cache-control headers
+         *
          * @param duration Ex: 3h
          */
         public void cacheFor(String etag, String duration, long lastModified) {
@@ -738,6 +753,7 @@ public class Http {
          * Add headers to allow cross-domain requests. Be careful, a lot of browsers don't support
          * these features and will ignore the headers. Refer to the browsers' documentation to
          * know what versions support them.
+         *
          * @param allowOrigin a comma separated list of domains allowed to perform the x-domain call, or "*" for all.
          */
         public void accessControl(String allowOrigin) {
@@ -748,7 +764,8 @@ public class Http {
          * Add headers to allow cross-domain requests. Be careful, a lot of browsers don't support
          * these features and will ignore the headers. Refer to the browsers' documentation to
          * know what versions support them.
-         * @param allowOrigin a comma separated list of domains allowed to perform the x-domain call, or "*" for all.
+         *
+         * @param allowOrigin      a comma separated list of domains allowed to perform the x-domain call, or "*" for all.
          * @param allowCredentials Let the browser send the cookies when doing a x-domain request. Only respected by the browser if allowOrigin != "*"
          */
         public void accessControl(String allowOrigin, boolean allowCredentials) {
@@ -759,8 +776,9 @@ public class Http {
          * Add headers to allow cross-domain requests. Be careful, a lot of browsers don't support
          * these features and will ignore the headers. Refer to the browsers' documentation to
          * know what versions support them.
-         * @param allowOrigin a comma separated list of domains allowed to perform the x-domain call, or "*" for all.
-         * @param allowMethods a comma separated list of HTTP methods allowed, or null for all.
+         *
+         * @param allowOrigin      a comma separated list of domains allowed to perform the x-domain call, or "*" for all.
+         * @param allowMethods     a comma separated list of HTTP methods allowed, or null for all.
          * @param allowCredentials Let the browser send the cookies when doing a x-domain request. Only respected by the browser if allowOrigin != "*"
          */
         public void accessControl(String allowOrigin, String allowMethods, boolean allowCredentials) {
@@ -787,6 +805,7 @@ public class Http {
         public void reset() {
             out.reset();
         }
+
         // Chunked stream
         public boolean chunked = false;
         final List<F.Action<Object>> writeChunkHandlers = new ArrayList<F.Action<Object>>();
@@ -816,6 +835,7 @@ public class Http {
         public static Inbound current() {
             return current.get();
         }
+
         final EventStream<WebSocketEvent> stream = new EventStream<WebSocketEvent>();
 
         public void _received(WebSocketFrame frame) {

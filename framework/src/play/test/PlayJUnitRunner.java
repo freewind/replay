@@ -1,6 +1,5 @@
 package play.test;
 
-import java.io.File;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.junit.rules.MethodRule;
 import org.junit.runner.Description;
@@ -17,12 +16,14 @@ import play.Invoker;
 import play.Invoker.DirectInvocation;
 import play.Play;
 
+import java.io.File;
+
 public class PlayJUnitRunner extends Runner implements Filterable {
 
     public static final String invocationType = "JUnitTest";
 
     public static boolean useCustomRunner = false;
-    
+
     // *******************
     JUnit4 jUnit4;
 
@@ -42,7 +43,7 @@ public class PlayJUnitRunner extends Runner implements Filterable {
 
     private static String getPlayId() {
         String playId = System.getProperty("play.id", "test");
-        if(! (playId.startsWith("test-") && playId.length() >= 6)) {
+        if (!(playId.startsWith("test-") && playId.length() >= 6)) {
             playId = "test";
         }
         return playId;
@@ -57,18 +58,17 @@ public class PlayJUnitRunner extends Runner implements Filterable {
     public void run(final RunNotifier notifier) {
         jUnit4.run(notifier);
     }
-    
+
     @Override
     public void filter(Filter toFilter) throws NoTestsRemainException {
-    	jUnit4.filter(toFilter);
-    	
+        jUnit4.filter(toFilter);
+
     }
 
     // *********************
     public enum StartPlay implements MethodRule {
 
         INVOKE_THE_TEST_IN_PLAY_CONTEXT {
-
             public Statement apply(final Statement base, FrameworkMethod method, Object target) {
 
                 return new Statement() {
@@ -105,7 +105,6 @@ public class PlayJUnitRunner extends Runner implements Filterable {
             }
         },
         JUST_RUN_THE_TEST {
-
             public Statement apply(final Statement base, FrameworkMethod method, Object target) {
                 return new Statement() {
 

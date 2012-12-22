@@ -1,12 +1,5 @@
 package play.classloading.enhancers;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import javassist.CannotCompileException;
 import javassist.CtBehavior;
 import javassist.CtClass;
@@ -23,8 +16,16 @@ import play.Play;
 import play.classloading.ApplicationClasses.ApplicationClass;
 import play.exceptions.UnexpectedException;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+
 /**
- * Generate valid JavaBeans. 
+ * Generate valid JavaBeans.
  */
 public class PropertiesEnhancer extends Enhancer {
 
@@ -35,7 +36,7 @@ public class PropertiesEnhancer extends Enhancer {
         if (ctClass.isInterface()) {
             return;
         }
-        if(ctClass.getName().endsWith(".package")) {
+        if (ctClass.getName().endsWith(".package")) {
             return;
         }
 
@@ -146,7 +147,7 @@ public class PropertiesEnhancer extends Enhancer {
                             // Si c'est un getter ou un setter
                             String propertyName = null;
                             if (fieldAccess.getField().getDeclaringClass().equals(ctMethod.getDeclaringClass())
-                                || ctMethod.getDeclaringClass().subclassOf(fieldAccess.getField().getDeclaringClass())) {
+                                    || ctMethod.getDeclaringClass().subclassOf(fieldAccess.getField().getDeclaringClass())) {
                                 if ((ctMethod.getName().startsWith("get") || (!isFinal(fieldAccess.getField()) && ctMethod.getName().startsWith("set"))) && ctMethod.getName().length() > 3) {
                                     propertyName = ctMethod.getName().substring(3);
                                     propertyName = propertyName.substring(0, 1).toLowerCase() + propertyName.substring(1);

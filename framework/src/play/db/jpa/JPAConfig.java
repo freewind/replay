@@ -1,28 +1,28 @@
 package play.db.jpa;
 
-import java.lang.reflect.Modifier;
-import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-
 import org.hibernate.ejb.Ejb3Configuration;
 import play.Invoker;
 import play.Play;
 import play.classloading.ApplicationClasses;
 import play.exceptions.JPAException;
 
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import java.lang.reflect.Modifier;
+
 /**
  * JPA Support for a specific JPA/DB configuration
- *
+ * <p/>
  * dbConfigName corresponds to properties-names in application.conf.
- *
+ * <p/>
  * The default DBConfig is the one configured using 'db.' in application.conf
- *
+ * <p/>
  * dbConfigName = 'other' is configured like this:
- *
+ * <p/>
  * db_other = mem
  * db_other.user = batman
- *
- *
+ * <p/>
+ * <p/>
  * A particular JPAConfig-instance uses the DBConfig with the same configName
  */
 
@@ -71,6 +71,7 @@ public class JPAConfig {
 
     /**
      * gets the active or create new
+     *
      * @return the active JPAContext bound to current thread
      */
     public JPAContext getJPAContext() {
@@ -80,25 +81,26 @@ public class JPAConfig {
 
     /**
      * gets the active or create new. manualReadOnly is only used if we're create new context
+     *
      * @param manualReadOnly is not null, this value is used instead of value from @Transactional.readOnly
      * @return the active JPAContext bound to current thread
      */
     protected JPAContext getJPAContext(Boolean manualReadOnly) {
         JPAContext context = local.get();
-        if ( context == null) {
+        if (context == null) {
             // throw new JPAException("The JPAContext is not initialized. JPA Entity Manager automatically start when one or more classes annotated with the @javax.persistence.Entity annotation are found in the application.");
 
             // This is the first time someone tries to use JPA in this thread.
             // we must initialize it
 
-            if(Invoker.InvocationContext.current().getAnnotation(NoTransaction.class) != null ) {
+            if (Invoker.InvocationContext.current().getAnnotation(NoTransaction.class) != null) {
                 //Called method or class is annotated with @NoTransaction telling us that
                 //we should not start a transaction
                 throw new JPAException("Cannot create JPAContext due to @NoTransaction");
             }
 
             boolean readOnly = false;
-            if (manualReadOnly!=null) {
+            if (manualReadOnly != null) {
                 readOnly = manualReadOnly;
             } else {
                 Transactional tx = Invoker.InvocationContext.current().getAnnotation(Transactional.class);
@@ -118,7 +120,7 @@ public class JPAConfig {
         if (context != null) {
             try {
                 context.close();
-            } catch(Exception e) {
+            } catch (Exception e) {
                 // Let's it fail
             }
             local.remove();
@@ -141,20 +143,20 @@ public class JPAConfig {
 
     /**
      * Looks up all {@link JPAConfigurationExtension} implementations and applies them to the JPA configuration.
-     * 
-     * @param cfg the {@link} Ejb3Configuration for this {@link JPAConfig}
+     *
+     * @param cfg        the {@link} Ejb3Configuration for this {@link JPAConfig}
      * @param configName the name of the db configuration
      */
     protected void invokeJPAConfigurationExtensions(Ejb3Configuration cfg, String configName) {
-        for(ApplicationClasses.ApplicationClass c : Play.classes.getAssignableClasses(JPAConfigurationExtension.class)) {
-            if(!Modifier.isAbstract(c.getClass().getModifiers())) {
+        for (ApplicationClasses.ApplicationClass c : Play.classes.getAssignableClasses(JPAConfigurationExtension.class)) {
+            if (!Modifier.isAbstract(c.getClass().getModifiers())) {
                 JPAConfigurationExtension extension = null;
                 try {
                     extension = (JPAConfigurationExtension) c.javaClass.newInstance();
                 } catch (Throwable t) {
                     throw new JPAException(String.format("Could not instantiate JPAConfigurationExtension '%s'", c.javaClass.getName()), t);
                 }
-                if(extension.getConfigurationName() == null || extension.getConfigurationName().equals(configName)) {
+                if (extension.getConfigurationName() == null || extension.getConfigurationName().equals(configName)) {
                     extension.configure(cfg);
                 }
             }

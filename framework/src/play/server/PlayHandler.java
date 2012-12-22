@@ -5,10 +5,35 @@ import org.apache.commons.lang.StringUtils;
 import org.jboss.netty.buffer.ChannelBuffer;
 import org.jboss.netty.buffer.ChannelBufferInputStream;
 import org.jboss.netty.buffer.ChannelBuffers;
-import org.jboss.netty.channel.*;
-import org.jboss.netty.handler.codec.http.*;
-import org.jboss.netty.handler.codec.http.websocketx.*;
-import org.jboss.netty.handler.stream.ChunkedFile;
+import org.jboss.netty.channel.Channel;
+import org.jboss.netty.channel.ChannelFuture;
+import org.jboss.netty.channel.ChannelFutureListener;
+import org.jboss.netty.channel.ChannelHandlerContext;
+import org.jboss.netty.channel.ChannelStateEvent;
+import org.jboss.netty.channel.ExceptionEvent;
+import org.jboss.netty.channel.MessageEvent;
+import org.jboss.netty.channel.SimpleChannelUpstreamHandler;
+import org.jboss.netty.handler.codec.http.Cookie;
+import org.jboss.netty.handler.codec.http.CookieDecoder;
+import org.jboss.netty.handler.codec.http.CookieEncoder;
+import org.jboss.netty.handler.codec.http.DefaultCookie;
+import org.jboss.netty.handler.codec.http.DefaultHttpResponse;
+import org.jboss.netty.handler.codec.http.HttpChunkAggregator;
+import org.jboss.netty.handler.codec.http.HttpHeaders;
+import org.jboss.netty.handler.codec.http.HttpMessage;
+import org.jboss.netty.handler.codec.http.HttpMethod;
+import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpResponse;
+import org.jboss.netty.handler.codec.http.HttpResponseStatus;
+import org.jboss.netty.handler.codec.http.HttpVersion;
+import org.jboss.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
+import org.jboss.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
+import org.jboss.netty.handler.codec.http.websocketx.PingWebSocketFrame;
+import org.jboss.netty.handler.codec.http.websocketx.PongWebSocketFrame;
+import org.jboss.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import org.jboss.netty.handler.codec.http.websocketx.WebSocketFrame;
+import org.jboss.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
+import org.jboss.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
 import org.jboss.netty.handler.stream.ChunkedInput;
 import org.jboss.netty.handler.stream.ChunkedStream;
 import org.jboss.netty.handler.stream.ChunkedWriteHandler;
@@ -23,9 +48,13 @@ import play.i18n.Messages;
 import play.libs.F.Action;
 import play.libs.F.Promise;
 import play.libs.MimeTypes;
-import play.mvc.*;
+import play.mvc.ActionInvoker;
+import play.mvc.Http;
 import play.mvc.Http.Request;
 import play.mvc.Http.Response;
+import play.mvc.Router;
+import play.mvc.Scope;
+import play.mvc.WebSocketInvoker;
 import play.mvc.results.NotFound;
 import play.mvc.results.RenderStatic;
 import play.templates.JavaExtensions;
@@ -34,14 +63,24 @@ import play.utils.HTTP;
 import play.utils.Utils;
 import play.vfs.VirtualFile;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -70,8 +109,8 @@ public class PlayHandler extends SimpleChannelUpstreamHandler {
         } catch (NoSuchAlgorithmException e) {
             throw new InternalError("SHA-1 not supported on this platform");
         }
-    } 
-    
+    }
+
     static {
         exposePlayServer = !"false".equals(Play.configuration.getProperty("http.exposePlayServer"));
     }
@@ -427,7 +466,7 @@ public class PlayHandler extends SimpleChannelUpstreamHandler {
                     try {
                         FileService.serve(file, nettyRequest, nettyResponse, ctx, request, response, ctx.getChannel());
                     } catch (Throwable exx) {
-                        
+
                         try {
                             ctx.getChannel().close();
                         } catch (Throwable ex) { /* Left empty */ }
@@ -787,7 +826,7 @@ public class PlayHandler extends SimpleChannelUpstreamHandler {
             Logger.trace("serve500: end");
         }
     }
-    
+
     public void serveStatic(RenderStatic renderStatic, ChannelHandlerContext ctx, Request request, Response response, HttpRequest nettyRequest, MessageEvent e) {
         if (Logger.isTraceEnabled()) {
             Logger.trace("serveStatic: begin");
@@ -954,8 +993,8 @@ public class PlayHandler extends SimpleChannelUpstreamHandler {
             }
 
             byte[] bytes;
-            if ( chunk instanceof byte[]) {
-                bytes = (byte[])chunk;
+            if (chunk instanceof byte[]) {
+                bytes = (byte[]) chunk;
             } else {
                 String message = chunk == null ? "" : chunk.toString();
                 bytes = message.getBytes(Response.current().encoding);
@@ -963,11 +1002,11 @@ public class PlayHandler extends SimpleChannelUpstreamHandler {
 
             ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
             byteStream.write(Integer.toHexString(bytes.length).getBytes());
-            final byte[] crlf = new byte[]{(byte)'\r', (byte)'\n'};
+            final byte[] crlf = new byte[]{(byte) '\r', (byte) '\n'};
             byteStream.write(crlf);
             byteStream.write(bytes);
             byteStream.write(crlf);
-            nextChunks.offer( byteStream.toByteArray());
+            nextChunks.offer(byteStream.toByteArray());
         }
     }
 
@@ -1007,10 +1046,10 @@ public class PlayHandler extends SimpleChannelUpstreamHandler {
         } else if (webSocketFrame instanceof BinaryWebSocketFrame) {
             inbound._received(new Http.WebSocketFrame(webSocketFrame.getBinaryData().array()));
         } else if (webSocketFrame instanceof TextWebSocketFrame) {
-            inbound._received(new Http.WebSocketFrame(((TextWebSocketFrame)webSocketFrame).getText()));
+            inbound._received(new Http.WebSocketFrame(((TextWebSocketFrame) webSocketFrame).getText()));
         }
     }
-    
+
     private String getWebSocketLocation(HttpRequest req) {
         return "ws://" + req.getHeader(HttpHeaders.Names.HOST) + req.getUri();
     }
@@ -1022,23 +1061,26 @@ public class PlayHandler extends SimpleChannelUpstreamHandler {
 
         // Upgrade the pipeline as the handshaker needs the HttpStream Aggregator
         ctx.getPipeline().addLast("fake-aggregator", new HttpChunkAggregator(max));
-	try {
-        WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(
-                this.getWebSocketLocation(req), null, false);
-        this.handshaker = wsFactory.newHandshaker(req);
-        if (this.handshaker == null) {
-            wsFactory.sendUnsupportedWebSocketVersionResponse(ctx.getChannel());
-        } else {
-            try {
-                this.handshaker.handshake(ctx.getChannel(), req);
-            } catch(Exception e) {
-                e.printStackTrace();
+        try {
+            WebSocketServerHandshakerFactory wsFactory = new WebSocketServerHandshakerFactory(
+                    this.getWebSocketLocation(req), null, false);
+            this.handshaker = wsFactory.newHandshaker(req);
+            if (this.handshaker == null) {
+                wsFactory.sendUnsupportedWebSocketVersionResponse(ctx.getChannel());
+            } else {
+                try {
+                    this.handshaker.handshake(ctx.getChannel(), req);
+                } catch (Exception e) {
+                    e.printStackTrace();
 
+                }
             }
-        }
         } finally {
-           // Remove fake aggregator in case handshake was not a sucess, it is still lying around
-           try { ctx.getPipeline().remove("fake-aggregator"); } catch(Exception e) {}
+            // Remove fake aggregator in case handshake was not a sucess, it is still lying around
+            try {
+                ctx.getPipeline().remove("fake-aggregator");
+            } catch (Exception e) {
+            }
         }
         Http.Request request = parseRequest(ctx, req, messageEvent);
 

@@ -1,10 +1,10 @@
 package play.db.jpa;
 
+import play.exceptions.JPAException;
+
 import javax.persistence.EntityManager;
 import javax.persistence.FlushModeType;
 import javax.persistence.PersistenceException;
-
-import play.exceptions.JPAException;
 
 /**
  * JPA Support
@@ -37,6 +37,7 @@ public class JPAContext {
 
     /**
      * clear current JPA context and transaction
+     *
      * @param rollback shall current transaction be committed (false) or cancelled (true)
      */
     public void closeTx(boolean rollback) {
@@ -72,7 +73,8 @@ public class JPAContext {
     }
 
     protected void close() {
-        entityManager.close();;
+        entityManager.close();
+        ;
     }
 
     /*
