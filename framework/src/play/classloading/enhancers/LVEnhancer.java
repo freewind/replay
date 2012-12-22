@@ -2,7 +2,6 @@ package play.classloading.enhancers;
 
 import bytecodeparser.analysis.decoders.DecodedMethodInvocationOp;
 import bytecodeparser.analysis.decoders.DecodedMethodInvocationOp.MethodParams;
-import bytecodeparser.analysis.opcodes.ExitOpcode;
 import bytecodeparser.analysis.stack.StackAnalyzer;
 import bytecodeparser.analysis.stack.StackAnalyzer.Frame;
 import bytecodeparser.analysis.stack.StackAnalyzer.Frames;
@@ -98,14 +97,15 @@ public class LVEnhancer extends Enhancer {
                             insert(b, ctClass, behavior, codeAttribute, iterator, frame, false);
                         }
                     }
-                    if (frame.decodedOp.op instanceof ExitOpcode) {
-                        Bytecode b = makeExitMethod(behavior, ctClass.getName(), behavior.getName(), behavior.getSignature());
-                        insert(b, ctClass, behavior, codeAttribute, iterator, frame, false);
-                    }
-                    if (iterator.isFirst()) {
-                        insert(makeEnterMethod(behavior, ctClass.getName(), behavior.getName(), behavior.getSignature()), ctClass, behavior, codeAttribute, iterator, frame, false);
-                    }
                 }
+
+                String stmtTemplate = "play.classloading.enhancers.LVEnhancer.LVEnhancerRuntime.%s(" +
+                        "\"" + ctClass.getName() + "\", " +
+                        "\"" + behavior.getName() + "\", " +
+                        "\"" + behavior.getSignature() + "\");";
+                behavior.insertBefore(String.format(stmtTemplate, "enterMethod"));
+                behavior.insertAfter(String.format(stmtTemplate, "exitMethod"), true);
+
             } catch (Exception e) {
                 throw new UnexpectedException("LVEnhancer: cannot enhance the behavior '" + behavior.getLongName() + "'", e);
             }
@@ -224,7 +224,7 @@ public class LVEnhancer extends Enhancer {
         private static ThreadLocal<Stack<MethodExecution>> methodParams = new ThreadLocal<Stack<MethodExecution>>();
 
         public static void enterMethod(String clazz, String method, String signature) {
-            getCurrentMethodParams().push(new MethodExecution());
+            getCurrentMethodParams().push(new MethodExecution(method));
         }
 
         public static void exitMethod(String clazz, String method, String signature) {
@@ -232,7 +232,7 @@ public class LVEnhancer extends Enhancer {
         }
 
         public static void initMethodCall(String method, int nbParams, String subject, String[] paramNames) {
-            getCurrentMethodParams().peek().currentNestedMethodCall = new MethodExecution(subject, paramNames, nbParams);
+            getCurrentMethodParams().peek().currentNestedMethodCall = new MethodExecution(method, subject, paramNames, nbParams);
         }
 
         /**
@@ -311,15 +311,18 @@ public class LVEnhancer extends Enhancer {
     }
 
     public static class MethodExecution {
+        protected String method;
         protected String[] paramsNames;
         protected String[] varargsNames;
         protected String subject;
         protected MethodExecution currentNestedMethodCall;
 
-        private MethodExecution() {
+        private MethodExecution(String method) {
+            this.method = method;
         }
 
-        private MethodExecution(String subject, String[] params, int nb) {
+        private MethodExecution(String method, String subject, String[] params, int nb) {
+            this.method = method;
             this.subject = subject;
             paramsNames = Arrays.copyOfRange(params, 0, nb);
             if (nb < params.length)
@@ -335,6 +338,10 @@ public class LVEnhancer extends Enhancer {
             return varargsNames;
         }
 
+        public String getMethod() {
+            return method;
+        }
+
         public String getSubject() {
             return subject;
         }
@@ -342,5 +349,11 @@ public class LVEnhancer extends Enhancer {
         public MethodExecution getCurrentNestedMethodCall() {
             return currentNestedMethodCall;
         }
+
+        @Override
+        public String toString() {
+            return "MethodExecution: method=" + method + ", subject=" + subject + "paramsNames:" + paramsNames + ",varNames: " + varargsNames;
+        }
+
     }
 }
