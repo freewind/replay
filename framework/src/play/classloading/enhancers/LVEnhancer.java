@@ -34,7 +34,8 @@ public class LVEnhancer extends Enhancer {
         for (CtBehavior behavior : ctClass.getDeclaredMethods()) {
             try {
                 if (behavior.isEmpty() || behavior.getMethodInfo().getCodeAttribute() == null || Utils.getLocalVariableAttribute(behavior) == null) {
-                    CtField signature = CtField.make("public static String[] $" + behavior.getName() + "0 = new String[0];", ctClass);
+                    String fieldName = "$" + behavior.getName() + computeMethodHash(behavior.getParameterTypes());
+                    CtField signature = CtField.make("public static String[] " + fieldName + " = new String[0];", ctClass);
                     ctClass.addField(signature);
                     continue;
                 }
