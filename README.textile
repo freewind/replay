@@ -10,6 +10,7 @@ h1. 关于Replay
 2. 移除Play1.x中的某些功能，如scala支持（如果想用scala，可直接使用play2）
 3. 继续改进Play
 
+本项目fork于官方的Play1.2.5。欢迎大家在这里提issue，或者fork这个项目，严重欢迎发Pull Request，建立一个我们Play爱好者们自己的Play。
 ------
 
 h1. Welcome to Play framework
