@@ -1,3 +1,17 @@
+h1. 关于Replay
+
+众所周知，官方已经不再支持Play1.x，转而全力开发scala版的play2.x。我很喜欢play1.x，它给我带来了很多欢乐和开发时的愉快，所以我想对它继续支持。
+
+这个项目取名为Replay，表示“继续Play”之意。
+
+主要任务：
+
+1. 修改Play中发现的bug
+2. 移除Play1.x中的某些功能，如scala支持（如果想用scala，可直接使用play2）
+3. 继续改进Play
+
+------
+
 h1. Welcome to Play framework
 
 Play framework makes it easier to build Web applications with Java. It is a clean alternative to bloated Enterprise Java stacks. It focuses on developer productivity and targets RESTful architectures. Play is a perfect companion to agile software development.
