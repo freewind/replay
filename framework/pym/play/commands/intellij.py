@@ -56,9 +56,13 @@ def execute(**kargs):
     replaceAll(imlFile, r'%MODULE_LIBRARIES%', jdXML)
     
     iprFile = os.path.join(app.path, application_name + '.ipr')
-    shutil.copyfile(os.path.join(play_env["basedir"], 'resources/idea/iprTemplate.xml'), iprFile)
-    replaceAll(iprFile, r'%PROJECT_NAME%', application_name)
-    
+    if os.path.isfile(iprFile):
+        print "~ " + iprFile + " exists, do nothing with it"
+        print "~ You can delete it if you want to re-generate it"
+        print "~"
+    else:
+        shutil.copyfile(os.path.join(play_env["basedir"], 'resources/idea/iprTemplate.xml'), iprFile)
+        replaceAll(iprFile, r'%PROJECT_NAME%', application_name)
 
     print "~ OK, the application is ready for Intellij Idea"
     print "~ Use File, Open Project... to open \"" + application_name + ".ipr\""
