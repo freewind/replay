@@ -451,13 +451,13 @@ public class Http {
                 return;
             }
 
-            if (accept.indexOf("text/plain") != -1) {
-                format = "txt".intern();
+            if (accept.indexOf("application/json") != -1 || accept.indexOf("text/javascript") != -1) {
+                format = "json".intern();
                 return;
             }
 
-            if (accept.indexOf("application/json") != -1 || accept.indexOf("text/javascript") != -1) {
-                format = "json".intern();
+            if (accept.indexOf("text/plain") != -1) {
+                format = "txt".intern();
                 return;
             }
 
