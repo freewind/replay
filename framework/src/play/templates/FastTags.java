@@ -346,13 +346,9 @@ public class FastTags {
                 throw new TemplateExecutionException(template.template, fromLine, "Specify a template name", new TagInternalException("Specify a template name"));
             }
             String name = args.get("arg").toString();
+
             if (name.startsWith("./")) {
-                String ct = BaseTemplate.currentTemplate.get().name;
-                if (ct.matches("^/lib/[^/]+/app/views/.*")) {
-                    ct = ct.substring(ct.indexOf("/", 5));
-                }
-                ct = ct.substring(0, ct.lastIndexOf("/"));
-                name = ct + name.substring(1);
+                name = getTemplateNameFromRelativePath(name);
             }
             BaseTemplate t = (BaseTemplate) TemplateLoader.load(name);
             Map<String, Object> newArgs = new HashMap<String, Object>();
@@ -364,6 +360,7 @@ public class FastTags {
         }
     }
 
+
     @SuppressWarnings("unchecked")
     public static void _render(Map<?, ?> args, Closure body, PrintWriter out, ExecutableTemplate template, int fromLine) {
         try {
@@ -372,12 +369,7 @@ public class FastTags {
             }
             String name = args.get("arg").toString();
             if (name.startsWith("./")) {
-                String ct = BaseTemplate.currentTemplate.get().name;
-                if (ct.matches("^/lib/[^/]+/app/views/.*")) {
-                    ct = ct.substring(ct.indexOf("/", 5));
-                }
-                ct = ct.substring(0, ct.lastIndexOf("/"));
-                name = ct + name.substring(1);
+                name = getTemplateNameFromRelativePath(name);
             }
             args.remove("arg");
             BaseTemplate t = (BaseTemplate) TemplateLoader.load(name);
@@ -410,7 +402,26 @@ public class FastTags {
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.TYPE)
     public static @interface Namespace {
-
         String value() default "";
     }
+
+    private static String getTemplateNameFromRelativePath(String name) {
+        String ct = BaseTemplate.currentTemplate.get().name;
+        if (ct.matches("^/lib/[^/]+/app/views/.*")) {
+            ct = ct.substring(ct.indexOf("/", 5));
+        }
+        if (ct.startsWith("{module:")) {
+            ct = ct.substring(ct.lastIndexOf('}') + 1);
+        }
+        if (ct.charAt(0) == '/') {
+            ct = ct.substring(1);
+        }
+        if (ct.startsWith("app/views/")) {
+            ct = ct.substring(10);
+        }
+        ct = ct.substring(0, ct.lastIndexOf("/"));
+        name = ct + name.substring(1);
+        return name;
+    }
+
 }
