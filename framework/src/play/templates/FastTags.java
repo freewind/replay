@@ -383,6 +383,18 @@ public class FastTags {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    public static void _safeFormatter(Map<?, ?> args, Closure body, PrintWriter out, ExecutableTemplate template, int fromLine) {
+        String formatterName = (String) args.get("arg");
+        String oriSafeFormatter = template.currentFormatter;
+        try {
+            template.currentFormatter = formatterName;
+            body.call();
+        } finally {
+            template.currentFormatter = oriSafeFormatter;
+        }
+    }
+
     public static String serialize(Map<?, ?> args, String... unless) {
         StringBuilder attrs = new StringBuilder();
         Arrays.sort(unless);

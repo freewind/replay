@@ -141,7 +141,7 @@ public class GroovyTemplate extends BaseTemplate {
                     }
                 });
                 compilationUnit.compile();
-                // ouf 
+                // ouf
 
                 // Define script classes
                 StringBuilder sb = new StringBuilder();
@@ -344,6 +344,7 @@ public class GroovyTemplate extends BaseTemplate {
         // Leave this field public to allow custom creation of TemplateExecutionException from different pkg
         public GroovyTemplate template;
         private String extension;
+        public String currentFormatter;
 
         public void init(GroovyTemplate t) {
             template = t;
@@ -426,6 +427,11 @@ public class GroovyTemplate extends BaseTemplate {
         public String __safeFaster(Object val) {
             if (val instanceof RawData) {
                 return ((RawData) val).data;
+            } else if(currentFormatter!=null) {
+                SafeFormatter formatter = safeFormatters.get(currentFormatter);
+                if(formatter!=null) {
+                    return formatter.format(template, val);
+                }
             } else if (extension != null) {
                 SafeFormatter formatter = safeFormatters.get(extension);
                 if (formatter != null) {
@@ -438,8 +444,8 @@ public class GroovyTemplate extends BaseTemplate {
         public String __getMessage(Object[] val) {
             if (val == null) {
                 throw new NullPointerException("You are trying to resolve a message with an expression " +
-                        "that is resolved to null - " +
-                        "have you forgotten quotes around the message-key?");
+                                               "that is resolved to null - " +
+                                               "have you forgotten quotes around the message-key?");
             }
             if (val.length == 1) {
                 return Messages.get(val[0]);
