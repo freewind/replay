@@ -76,7 +76,7 @@ def new(app, args, env, cmdloader=None):
                 if os.path.isdir(os.path.join(env["basedir"], 'modules/%s' % f)) and f.find('%s-' % m) == 0:
                     dirname = f
                     break
-        
+
         if not dirname:
             print "~ Oops. No module %s found" % m
             print "~ Try to install it using 'play install %s'" % m
@@ -111,7 +111,7 @@ def new(app, args, env, cmdloader=None):
                 runDepsAfter = True
             except Exception:
                 pass
-                
+
     if runDepsAfter:
         cmdloader.commands['dependencies'].execute(command='dependencies', app=app, args=['--sync'], env=env, cmdloader=cmdloader)
 
@@ -131,9 +131,13 @@ def handle_sigterm(signum, frame):
 def run(app, args):
     global process
     app.check()
-    
+
     print "~ Ctrl+C to stop"
     print "~ "
+
+    import thread
+    thread.start_new_thread(livereload, ())
+
     java_cmd = app.java_cmd(args)
     try:
         process = subprocess.Popen (java_cmd, env=os.environ)
@@ -252,7 +256,7 @@ def autotest(app, args):
            fpcp.append(os.path.normpath(os.path.join(fpcp_libs, jar)))
     cp_args = ':'.join(fpcp)
     if os.name == 'nt':
-        cp_args = ';'.join(fpcp)    
+        cp_args = ';'.join(fpcp)
     java_cmd = [app.java_path(), '-classpath', cp_args, '-Dapplication.url=%s://localhost:%s' % (protocol, http_port), '-DheadlessBrowser=%s' % (headless_browser), 'play.modules.testrunner.FirePhoque']
     if protocol == 'https':
         java_cmd.insert(-1, '-Djavax.net.ssl.trustStore=' + app.readConf('keystore.file'))
@@ -264,7 +268,7 @@ def autotest(app, args):
 
     print "~"
     time.sleep(1)
-    
+
     # Kill if exists
     try:
         proxy_handler = urllib2.ProxyHandler({})
@@ -272,7 +276,7 @@ def autotest(app, args):
         opener.open('%s://localhost:%s/@kill' % (protocol, http_port))
     except Exception, e:
         pass
- 
+
     if os.path.exists(os.path.join(app.path, 'test-result/result.passed')):
         print "~ All tests passed"
         print "~"
@@ -297,6 +301,15 @@ def id(play_env):
         print "~"
         if os.path.exists(play_env["id_file"]):
             os.remove(play_env["id_file"])
+
+def livereload():
+    __requires__ = 'livereload==0.11'
+    import sys
+    from pkg_resources import load_entry_point
+
+    sys.exit(
+        load_entry_point('livereload==0.11', 'console_scripts', 'livereload')()
+    )
 
 # ~~~~~~~~~ UTILS
 
