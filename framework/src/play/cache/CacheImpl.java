@@ -1,6 +1,7 @@
 package play.cache;
 
 import java.util.Map;
+import java.util.Collection;
 
 /**
  * A cache implementation.
@@ -37,4 +38,7 @@ public interface CacheImpl {
     public boolean safeDelete(String key);
 
     public void stop();
+
+    public Collection<String> getKeys();
+
 }

@@ -19,6 +19,7 @@ import java.io.ObjectOutputStream;
 import java.io.ObjectStreamClass;
 import java.net.InetSocketAddress;
 import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -219,4 +220,9 @@ public class MemcachedImpl implements CacheImpl {
     public void stop() {
         client.shutdown();
     }
+
+    public Collection<String> getKeys() {
+        throw new UnsupportedOperationException();
+    }
+
 }

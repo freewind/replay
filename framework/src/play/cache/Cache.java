@@ -8,6 +8,7 @@ import play.libs.Time;
 import java.io.NotSerializableException;
 import java.io.Serializable;
 import java.util.Map;
+import java.util.Collection;
 
 /**
  * The Cache. Mainly an interface to memcached or EhCache.
@@ -267,6 +268,9 @@ public abstract class Cache {
         cacheImpl.stop();
     }
 
+    public static Collection<String> getKeys() {
+        return cacheImpl.getKeys();
+    }
     /**
      * Utility that check that an object is serializable.
      */
@@ -275,5 +279,6 @@ public abstract class Cache {
             throw new CacheException("Cannot cache a non-serializable value of type " + value.getClass().getName(), new NotSerializableException(value.getClass().getName()));
         }
     }
+
 }
 

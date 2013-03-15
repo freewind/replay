@@ -6,6 +6,7 @@ import play.Logger;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Collection;
 
 /**
  * EhCache implementation.
@@ -155,4 +156,9 @@ public class EhCacheImpl implements CacheImpl {
     public void stop() {
         cacheManager.shutdown();
     }
+
+    public Collection<String> getKeys() {
+        return cache.getKeys();
+    }
+
 }
