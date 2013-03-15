@@ -1,2 +1,2 @@
 @echo off
-"%~dp0python\python.exe" "%~dp0play" %*
+"%~dp0python\python.exe" "%~dp0replay" %*
